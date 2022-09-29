@@ -7,8 +7,8 @@ namespace FourWays
     {
         static void Main(string[] args)
         {
-            TutoAme TutoAme = new TutoAme();
-            TutoAme.Run();
+            FourWaysSimulator fourWaysSimulator = new FourWaysSimulator();
+            fourWaysSimulator.Run();
         }
     }
 }

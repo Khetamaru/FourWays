@@ -22,22 +22,47 @@ namespace FourWays.Game
                 return;
             }
 
+            DrawPerformanceDataBackgroud(gameLoop);
+            DrawPerformanceDataInfos(gameLoop, fontColor);
+        }
+
+        private static void DrawPerformanceDataBackgroud(GameLoop gameLoop)
+        {
+            RectangleShape background = new RectangleShape(new Vector2f(160f, 70f));
+            background.Position = new Vector2f(0f, 0f);
+            background.FillColor = Color.Blue;
+
+            RectangleShape backgroundBorderX = new RectangleShape(new Vector2f(background.Size.X + 5f, 5f));
+            backgroundBorderX.Position = new Vector2f(0f, background.Size.Y);
+            backgroundBorderX.FillColor = Color.Red;
+
+            RectangleShape backgroundBorderY = new RectangleShape(new Vector2f(5f, background.Size.Y + 5f));
+            backgroundBorderY.Position = new Vector2f(background.Size.X, 0f);
+            backgroundBorderY.FillColor = Color.Red;
+
+            gameLoop.Window.Draw(backgroundBorderX);
+            gameLoop.Window.Draw(backgroundBorderY);
+            gameLoop.Window.Draw(background);
+        }
+
+        private static void DrawPerformanceDataInfos(GameLoop gameLoop, Color fontColor)
+        {
             string totalTimeElapsedStr = gameLoop.GameTime.TotalTimeElapsed.ToString("0.000");
             string deltaTimeStr = gameLoop.GameTime.DeltaTime.ToString("0.00000");
             float fps = 1f / gameLoop.GameTime.DeltaTime;
             string fpsStr = fps.ToString("0.00");
 
-            Text text = new Text(totalTimeElapsedStr, consoleFont, 14);
+            Text text = new Text("Time Elapsed : " + totalTimeElapsedStr, consoleFont, 14);
             text.Position = new Vector2f(4f, 8f);
-            text.Color = fontColor;
+            text.FillColor = fontColor;
 
-            Text textB = new Text(deltaTimeStr, consoleFont, 14);
+            Text textB = new Text("Refresh Time : " + deltaTimeStr, consoleFont, 14);
             textB.Position = new Vector2f(4f, 28f);
-            textB.Color = fontColor;
+            textB.FillColor = fontColor;
 
-            Text textC = new Text(fpsStr, consoleFont, 14);
+            Text textC = new Text("FPS : " + fpsStr, consoleFont, 14);
             textC.Position = new Vector2f(4f, 48f);
-            textC.Color = fontColor;
+            textC.FillColor = fontColor;
 
             gameLoop.Window.Draw(text);
             gameLoop.Window.Draw(textB);
