@@ -20,7 +20,8 @@ namespace FourWays.Game.Objects
         public Guid Guid;
         public RectangleShape Shape { get; private set; }
         private Color Color { get; set; }
-        private Direction direction { get; set; }
+        public Direction direction { get; private set; }
+        public Status status { get; set; }
 
         public enum Direction
         {
@@ -30,11 +31,18 @@ namespace FourWays.Game.Objects
             down
         }
 
+        public enum Status
+        {
+            Stop,
+            Go
+        }
+
         public Car(Direction direction, uint WindowWidth, uint WindowHeight)
         {
             Guid = Guid.NewGuid();
 
             this.direction = direction;
+            status = Status.Go;
             this.WindowWidth = WindowWidth;
             this.WindowHeight = WindowHeight;
 
@@ -69,29 +77,37 @@ namespace FourWays.Game.Objects
 
         public override void Update()
         {
-            switch (direction)
+            if (status == Status.Go)
             {
-                case Direction.left:
-                    Shape.Position = new Vector2f(Shape.Position.X - Speed, Shape.Position.Y);
-                    break;
+                switch (direction)
+                {
+                    case Direction.left:
+                        Shape.Position = new Vector2f(Shape.Position.X - Speed, Shape.Position.Y);
+                        break;
 
-                case Direction.right:
-                    Shape.Position = new Vector2f(Shape.Position.X + Speed, Shape.Position.Y);
-                    break;
+                    case Direction.right:
+                        Shape.Position = new Vector2f(Shape.Position.X + Speed, Shape.Position.Y);
+                        break;
 
-                case Direction.up:
-                    Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y - Speed);
-                    break;
+                    case Direction.up:
+                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y - Speed);
+                        break;
 
-                case Direction.down:
-                    Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y + Speed);
-                    break;
+                    case Direction.down:
+                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y + Speed);
+                        break;
+                }
             }
         }
 
         internal bool isColliding(Car car)
         {
             return Shape.GetGlobalBounds().Intersects(car.Shape.GetGlobalBounds());
+        }
+
+        internal bool isInTheStopArea(RectangleShape stopArea)
+        {
+            return Shape.GetGlobalBounds().Intersects(stopArea.GetGlobalBounds());
         }
 
         internal bool isOutOfBounds()

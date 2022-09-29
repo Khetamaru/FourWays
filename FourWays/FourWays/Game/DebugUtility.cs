@@ -47,7 +47,7 @@ namespace FourWays.Game
 
         private static void DrawPerformanceDataInfos(GameLoop gameLoop, Color fontColor)
         {
-            string totalTimeElapsedStr = gameLoop.GameTime.TotalTimeElapsed.ToString("0.000");
+            string totalTimeElapsedStr = gameLoop.GameTime.TotalTimeElapsed.ToString("0.00");
             string deltaTimeStr = gameLoop.GameTime.DeltaTime.ToString("0.00000");
             float fps = 1f / gameLoop.GameTime.DeltaTime;
             string fpsStr = fps.ToString("0.00");
