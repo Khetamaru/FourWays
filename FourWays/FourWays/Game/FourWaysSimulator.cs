@@ -78,11 +78,19 @@ namespace FourWays.Game
 
         private void CarGeneration()
         {
-            Random rnd = new Random();
+            
 
             if (cars.Count < CAR_NUMBER_LIMIT)
             {
-                cars.Add(new Car((Car.Direction)Enum.GetValues(typeof(Car.Direction)).GetValue(rnd.Next(4)), DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT));
+                Car car;
+                do
+                {
+                    Car.Direction direction = (Car.Direction)Enum.GetValues(typeof(Car.Direction)).GetValue(new Random().Next(4));
+                    car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
+                }
+                while (CollisionTest(car));
+
+                cars.Add(car);
             }
         }
 
@@ -120,6 +128,18 @@ namespace FourWays.Game
             }
 
             return trashList;
+        }
+
+        private bool CollisionTest(Car car)
+        {
+            foreach (Car car2 in cars)
+            {
+                if (car.isColliding(car2))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void OutOfBoundsTest(List<Car> trashList)
