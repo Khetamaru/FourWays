@@ -9,7 +9,7 @@ namespace FourWays.Game.Objects
         private uint WindowWidth;
         private uint WindowHeight;
 
-        private const float SecurityDistance = 10f;
+        private const float SecurityDistance = 5f;
         private const float Speed = 4f;
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
@@ -79,7 +79,7 @@ namespace FourWays.Game.Objects
 
                 case Direction.left:
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
-                    Shape.Position = new Vector2f(WindowWidth, (WindowHeight/ 2) - 45);
+                    Shape.Position = new Vector2f(WindowWidth, (WindowHeight / 2) - 45);
 
                     break;
 
@@ -132,6 +132,10 @@ namespace FourWays.Game.Objects
             {
                 Move();
             }
+            else if (isInTheStopArea() && RoadLight.state == RoadLight.State.Red && !isThereSomeOneInFront())
+            {
+                MoveToRoadLightLigne();
+            }
         }
 
         private void LookAtRoadLight()
@@ -154,6 +158,65 @@ namespace FourWays.Game.Objects
             }
         }
 
+        private void MoveToRoadLightLigne()
+        {
+            float x = Math.Abs(Speed * move.X);
+            float x2 = Math.Abs(Shape.Position.X - RoadLight.StopArea.Position.X);
+            float y = Math.Abs(Speed * move.Y);
+            float y2 = Math.Abs(Shape.Position.Y - RoadLight.StopArea.Position.Y);
+
+            switch (direction)
+            {
+                case Direction.left:
+
+                    if (x < x2)
+                    {
+                        Move();
+                    }
+                    else
+                    {
+                        Shape.Position = new Vector2f(Shape.Position.X - x2, Shape.Position.Y);
+                    }
+                    break;
+
+                case Direction.right:
+
+                    if (x < x2)
+                    {
+                        Move();
+                    }
+                    else
+                    {
+                        Shape.Position = new Vector2f(Shape.Position.X + x2, Shape.Position.Y);
+                    }
+                    break;
+
+                case Direction.up:
+
+                    if (y < y2)
+                    {
+                        Move();
+                    }
+                    else
+                    {
+                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y - y2);
+                    }
+                    break;
+
+                case Direction.down:
+
+                    if (y < y2)
+                    {
+                        Move();
+                    }
+                    else
+                    {
+                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y + y2);
+                    }
+                    break;
+            }
+        }
+
         internal bool isColliding(Car car)
         {
             if (car.Guid != Guid)
@@ -165,7 +228,19 @@ namespace FourWays.Game.Objects
 
         internal bool isInTheStopArea()
         {
-            return Shape.GetGlobalBounds().Intersects(RoadLight.StopArea.GetGlobalBounds());
+            return Shape.GetGlobalBounds().Intersects(RoadLight.StopArea.GetGlobalBounds()) && isBehindTheRoadLight();
+        }
+
+        private bool isBehindTheRoadLight()
+        {
+            switch (direction)
+            {
+                case Direction.left: return Shape.Position.X >= RoadLight.StopArea.Position.X;
+                case Direction.right: return Shape.Position.X <= RoadLight.StopArea.Position.X;
+                case Direction.up: return Shape.Position.Y >= RoadLight.StopArea.Position.Y;
+                case Direction.down: return Shape.Position.Y <= RoadLight.StopArea.Position.Y;
+            }
+            return true;
         }
 
         internal bool isThereSomeOneInFront()

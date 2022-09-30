@@ -17,6 +17,8 @@ namespace FourWays.Game.Objects
         float deltaTime;
         float totalTimeElapsed;
 
+        RoadLight RoadLightLeft;
+
         Clock clock = new Clock();
 
         public const string GREEN_LIGHT_PATH = "./Ressources/traffic-lights-green.png";
@@ -54,10 +56,10 @@ namespace FourWays.Game.Objects
 
         public RectangleShape StopArea;
 
-        public RoadLight(Vector2f position, Car.Direction direction, RectangleShape StopArea) 
+        public RoadLight(Vector2f position, Car.Direction direction, RectangleShape StopArea, State startLight) 
         {
             LoadContent();
-            Initialize(position, direction, StopArea);
+            Initialize(position, direction, StopArea, startLight);
         }
 
         public void LoadContent()
@@ -67,7 +69,7 @@ namespace FourWays.Game.Objects
             RoadLightRed = new Texture(new Image(RED_LIGHT_PATH));
         }
 
-        private void Initialize(Vector2f position, Car.Direction direction, RectangleShape stopArea)
+        private void Initialize(Vector2f position, Car.Direction direction, RectangleShape stopArea, State startLight)
         {
             Image = new RectangleShape();
             Image.Position = position;
@@ -76,7 +78,7 @@ namespace FourWays.Game.Objects
             StopArea = stopArea;
             StopArea.FillColor = Color.Cyan;
 
-            state = State.Green;
+            state = startLight;
             this.direction = direction;
 
             switch (direction)
@@ -95,30 +97,37 @@ namespace FourWays.Game.Objects
 
         public override void Update()
         {
-            totalTimeElapsed = clock.ElapsedTime.AsSeconds();
-            deltaTime = totalTimeElapsed - previousTimeElapsed;
-            previousTimeElapsed = totalTimeElapsed;
+            if (RoadLightLeft.state != State.Green && state == State.Red || state != State.Red)
+            {
+                totalTimeElapsed = clock.ElapsedTime.AsSeconds();
+                deltaTime = totalTimeElapsed - previousTimeElapsed;
+                previousTimeElapsed = totalTimeElapsed;
 
-            totalTimeBeforeUpdate += deltaTime;
+                totalTimeBeforeUpdate += deltaTime;
 
-            if (totalTimeBeforeUpdate >= TIME_UNTIL_UPDATE)
+                if (totalTimeBeforeUpdate >= TIME_UNTIL_UPDATE)
+                {
+                    totalTimeBeforeUpdate = 0f;
+
+                    switch (state)
+                    {
+                        case State.Green:
+                            state = State.Orange;
+                            break;
+
+                        case State.Orange:
+                            state = State.Red;
+                            break;
+
+                        case State.Red:
+                            state = State.Green;
+                            break;
+                    }
+                }
+            }
+            else
             {
                 totalTimeBeforeUpdate = 0f;
-
-                switch (state)
-                {
-                    case State.Green:
-                        state = State.Orange;
-                        break;
-
-                    case State.Orange:
-                        state = State.Red;
-                        break;
-
-                    case State.Red:
-                        state = State.Green;
-                        break;
-                }
             }
         }
 
@@ -142,6 +151,11 @@ namespace FourWays.Game.Objects
                     break;
 
             }
+        }
+
+        public void AssignRoadLightLeft(RoadLight roadLight)
+        {
+            RoadLightLeft = roadLight;
         }
     }
 }

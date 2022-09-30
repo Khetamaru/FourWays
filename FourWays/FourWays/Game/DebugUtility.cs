@@ -28,7 +28,7 @@ namespace FourWays.Game
 
         private static void DrawPerformanceDataBackgroud(GameLoop gameLoop)
         {
-            RectangleShape background = new RectangleShape(new Vector2f(160f, 70f));
+            RectangleShape background = new RectangleShape(new Vector2f(160f, 90f));
             background.Position = new Vector2f(0f, 0f);
             background.FillColor = Color.Blue;
 
@@ -64,9 +64,14 @@ namespace FourWays.Game
             textC.Position = new Vector2f(4f, 48f);
             textC.FillColor = fontColor;
 
+            Text textD = new Text("Death Counter : " + (gameLoop as FourWaysSimulator).DEATH_COUNTER, consoleFont, 14);
+            textD.Position = new Vector2f(4f, 68f);
+            textD.FillColor = fontColor;
+
             gameLoop.Window.Draw(text);
             gameLoop.Window.Draw(textB);
             gameLoop.Window.Draw(textC);
+            gameLoop.Window.Draw(textD);
         }
     }
 }

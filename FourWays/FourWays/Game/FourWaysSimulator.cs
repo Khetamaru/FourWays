@@ -13,8 +13,10 @@ namespace FourWays.Game
         private const uint DEFAULT_WINDOW_WIDTH = 1280;
         private const uint DEFAULT_WINDOW_HEIGHT = 960;
 
-        private const uint CAR_NUMBER_LIMIT = 8;
+        private const uint CAR_NUMBER_LIMIT = 6;
         private const string WINDOW_TITLE = "Four Ways";
+
+        public uint DEATH_COUNTER = 0;
 
         private List<Car> rightRoadCars;
         private List<Car> leftRoadCars;
@@ -148,10 +150,20 @@ namespace FourWays.Game
             upStopArea.Position = new Vector2f(590f + 55f, 430f + +100f);
             leftStopArea.Position = new Vector2f(590f + 100f, 430f + 5f);
 
-            roadLights.Add(Car.Direction.right, new RoadLight(new Vector2f(580f, 535f), Car.Direction.right, rightStopArea));
-            roadLights.Add(Car.Direction.down, new RoadLight(new Vector2f(530f, 350f), Car.Direction.down, downStopArea));
-            roadLights.Add(Car.Direction.up, new RoadLight(new Vector2f(700f, 535f), Car.Direction.up, upStopArea));
-            roadLights.Add(Car.Direction.left, new RoadLight(new Vector2f(700f, 420f), Car.Direction.left, leftStopArea));
+            roadLights.Add(Car.Direction.right, new RoadLight(new Vector2f(580f, 535f), Car.Direction.right, rightStopArea, RoadLight.State.Green));
+            roadLights.Add(Car.Direction.down, new RoadLight(new Vector2f(530f, 350f), Car.Direction.down, downStopArea, RoadLight.State.Red));
+            roadLights.Add(Car.Direction.up, new RoadLight(new Vector2f(700f, 535f), Car.Direction.up, upStopArea, RoadLight.State.Red));
+            roadLights.Add(Car.Direction.left, new RoadLight(new Vector2f(700f, 420f), Car.Direction.left, leftStopArea, RoadLight.State.Green));
+
+            roadLights.TryGetValue(Car.Direction.left, out RoadLight tempLeft);
+            roadLights.TryGetValue(Car.Direction.right, out RoadLight tempRight);
+            roadLights.TryGetValue(Car.Direction.up, out RoadLight tempUp);
+            roadLights.TryGetValue(Car.Direction.down, out RoadLight tempDown);
+
+            tempLeft.AssignRoadLightLeft(tempUp);
+            tempUp.AssignRoadLightLeft(tempRight);
+            tempRight.AssignRoadLightLeft(tempDown);
+            tempDown.AssignRoadLightLeft(tempLeft);
         }
 
         public override void Update(GameTime gameTime)
@@ -262,6 +274,7 @@ namespace FourWays.Game
 
                                 trashList.Add(car);
                                 trashList.Add(car2);
+                                DEATH_COUNTER++;
                             }
                             catch { }
                         }
@@ -358,7 +371,7 @@ namespace FourWays.Game
             foreach (KeyValuePair<Car.Direction, RoadLight> roadLight in roadLights)
             {
                 Window.Draw(roadLight.Value.Image);
-                Window.Draw(roadLight.Value.StopArea);
+                //Window.Draw(roadLight.Value.StopArea);
             }
         }
 
