@@ -1,10 +1,6 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FourWays.Game.Objects
 {
@@ -13,15 +9,33 @@ namespace FourWays.Game.Objects
         private uint WindowWidth;
         private uint WindowHeight;
 
+        private const float SecurityDistance = 10f;
         private const float Speed = 4f;
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
 
+        Func<Car, bool> CollideTest { get; }
+        public Texture Texture { get; }
+
         public Guid Guid;
         public RectangleShape Shape { get; private set; }
+        private RoadLight RoadLight { get; }
         private Color Color { get; set; }
-        public Direction direction { get; private set; }
+        private Direction actualDirection { get; set; }
+        public Direction direction
+        {
+            get
+            {
+                return actualDirection;
+            }
+            private set
+            {
+                actualDirection = value;
+                AssignMove(value);
+            }
+        }
         public Status status { get; set; }
+        private Vector2f move { get; set; }
 
         public enum Direction
         {
@@ -37,7 +51,7 @@ namespace FourWays.Game.Objects
             Go
         }
 
-        public Car(Direction direction, uint WindowWidth, uint WindowHeight)
+        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, bool> collideTest, Texture texture)
         {
             Guid = Guid.NewGuid();
 
@@ -45,6 +59,9 @@ namespace FourWays.Game.Objects
             status = Status.Go;
             this.WindowWidth = WindowWidth;
             this.WindowHeight = WindowHeight;
+            RoadLight = roadLight;
+            CollideTest = collideTest;
+            Texture = texture;
 
             Color = Color.Red;
             switch (direction)
@@ -72,42 +89,95 @@ namespace FourWays.Game.Objects
 
                     break;
             }
-            Shape.FillColor = Color;
+            Shape.Texture = Texture;
+        }
+
+        private void AssignMove(Direction direction)
+        {
+            switch (direction)
+            {
+                case Direction.left:
+
+                    move = new Vector2f(-1, 0);
+                    break;
+
+                case Direction.right:
+
+                    move = new Vector2f(1, 0);
+                    break;
+
+                case Direction.up:
+
+                    move = new Vector2f(0, -1);
+                    break;
+
+                case Direction.down:
+
+                    move = new Vector2f(0, 1);
+                    break;
+            }
+        }
+
+        private void Move()
+        {
+            Shape.Position = new Vector2f(Shape.Position.X + (move.X * Speed), Shape.Position.Y + (move.Y * Speed));
         }
 
         public override void Update()
         {
+            LookAtRoadLight();
+            LookAtCarsInFront();
+
             if (status == Status.Go)
             {
-                switch (direction)
-                {
-                    case Direction.left:
-                        Shape.Position = new Vector2f(Shape.Position.X - Speed, Shape.Position.Y);
-                        break;
+                Move();
+            }
+        }
 
-                    case Direction.right:
-                        Shape.Position = new Vector2f(Shape.Position.X + Speed, Shape.Position.Y);
-                        break;
+        private void LookAtRoadLight()
+        {
+            if (isInTheStopArea() && RoadLight.state == RoadLight.State.Red)
+            {
+                status = Status.Stop;
+            }
+            else
+            {
+                status = Status.Go;
+            }
+        }
 
-                    case Direction.up:
-                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y - Speed);
-                        break;
-
-                    case Direction.down:
-                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y + Speed);
-                        break;
-                }
+        private void LookAtCarsInFront()
+        {
+            if (isThereSomeOneInFront())
+            {
+                status = Status.Stop;
             }
         }
 
         internal bool isColliding(Car car)
         {
-            return Shape.GetGlobalBounds().Intersects(car.Shape.GetGlobalBounds());
+            if (car.Guid != Guid)
+            {
+                return car.Shape.GetGlobalBounds().Intersects(Shape.GetGlobalBounds());
+            }
+            return false;
         }
 
-        internal bool isInTheStopArea(RectangleShape stopArea)
+        internal bool isInTheStopArea()
         {
-            return Shape.GetGlobalBounds().Intersects(stopArea.GetGlobalBounds());
+            return Shape.GetGlobalBounds().Intersects(RoadLight.StopArea.GetGlobalBounds());
+        }
+
+        internal bool isThereSomeOneInFront()
+        {
+            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X, Shape.Size.Y));
+            shape.Position = new Vector2f(Shape.Position.X + (SecurityDistance * Speed * move.X), Shape.Position.Y + (SecurityDistance * Speed * move.Y));
+
+            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture);
+            car.Guid = Guid;
+            car.Shape = shape;
+
+            return CollideTest.Invoke(car);
         }
 
         internal bool isOutOfBounds()
