@@ -31,10 +31,10 @@ namespace FourWays.Game.Objects
 
         public RectangleShape Image { get; private set; }
 
-        public Car.Direction direction;
+        public Direction direction;
 
-        private State actualState;
-        public State state 
+        private RoadLightState actualState;
+        public RoadLightState state 
         { 
             get
             {
@@ -47,19 +47,13 @@ namespace FourWays.Game.Objects
             } 
         }
 
-        public enum State
-        {
-            Green,
-            Orange,
-            Red
-        }
-
         public RectangleShape StopArea;
+        public RectangleShape DecelerateArea;
 
-        public RoadLight(Vector2f position, Car.Direction direction, RectangleShape StopArea, State startLight) 
+        public RoadLight(Vector2f position, Direction direction, RectangleShape StopArea, RectangleShape DecelerateArea, RoadLightState startLight) 
         {
             LoadContent();
-            Initialize(position, direction, StopArea, startLight);
+            Initialize(position, direction, StopArea, DecelerateArea, startLight);
         }
 
         public void LoadContent()
@@ -69,13 +63,14 @@ namespace FourWays.Game.Objects
             RoadLightRed = new Texture(new Image(RED_LIGHT_PATH));
         }
 
-        private void Initialize(Vector2f position, Car.Direction direction, RectangleShape stopArea, State startLight)
+        private void Initialize(Vector2f position, Direction direction, RectangleShape stopArea, RectangleShape decelerateArea, RoadLightState startLight)
         {
             Image = new RectangleShape();
             Image.Position = position;
             Image.Size = new Vector2f(48f, 72f);
 
             StopArea = stopArea;
+            DecelerateArea = decelerateArea;
             StopArea.FillColor = Color.Cyan;
 
             state = startLight;
@@ -83,12 +78,12 @@ namespace FourWays.Game.Objects
 
             switch (direction)
             {
-                case Car.Direction.left:
+                case Direction.left:
 
                     Image.Rotation = -90;
                     break;
 
-                case Car.Direction.right:
+                case Direction.right:
 
                     Image.Rotation = 90;
                     break;
@@ -97,7 +92,7 @@ namespace FourWays.Game.Objects
 
         public override void Update()
         {
-            if (RoadLightLeft.state != State.Green && state == State.Red || state != State.Red)
+            if (RoadLightLeft.state != RoadLightState.Green && state == RoadLightState.Red || state != RoadLightState.Red)
             {
                 totalTimeElapsed = clock.ElapsedTime.AsSeconds();
                 deltaTime = totalTimeElapsed - previousTimeElapsed;
@@ -111,16 +106,16 @@ namespace FourWays.Game.Objects
 
                     switch (state)
                     {
-                        case State.Green:
-                            state = State.Orange;
+                        case RoadLightState.Green:
+                            state = RoadLightState.Orange;
                             break;
 
-                        case State.Orange:
-                            state = State.Red;
+                        case RoadLightState.Orange:
+                            state = RoadLightState.Red;
                             break;
 
-                        case State.Red:
-                            state = State.Green;
+                        case RoadLightState.Red:
+                            state = RoadLightState.Green;
                             break;
                     }
                 }
@@ -131,21 +126,21 @@ namespace FourWays.Game.Objects
             }
         }
 
-        private void ApplyTexture(State state)
+        private void ApplyTexture(RoadLightState state)
         {
             switch (state)
             {
-                case State.Green:
+                case RoadLightState.Green:
 
                     Image.Texture = RoadLightGreen;
                     break;
 
-                case State.Orange:
+                case RoadLightState.Orange:
 
                     Image.Texture = RoadLightOrange;
                     break;
 
-                case State.Red:
+                case RoadLightState.Red:
 
                     Image.Texture = RoadLightRed;
                     break;
@@ -157,5 +152,12 @@ namespace FourWays.Game.Objects
         {
             RoadLightLeft = roadLight;
         }
+    }
+
+    public enum RoadLightState
+    {
+        Green,
+        Orange,
+        Red
     }
 }

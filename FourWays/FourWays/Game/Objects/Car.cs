@@ -13,6 +13,7 @@ namespace FourWays.Game.Objects
         private const float MaxSpeed = 6f;
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
+        private const double AccuracyPourcentageStackValue = 0.002;
 
         Func<Car, bool> CollideTest { get; }
         public Texture Texture { get; }
@@ -36,8 +37,8 @@ namespace FourWays.Game.Objects
                 AssignMove(value);
             }
         }
-        public Status ActualStatus { get; set; }
-        public Status status 
+        public CarState ActualStatus { get; set; }
+        public CarState status 
         {
             get
             {
@@ -46,7 +47,7 @@ namespace FourWays.Game.Objects
             set
             {
                 ActualStatus = value;
-                if (value == Status.Stop)
+                if (value == CarState.Stop)
                 {
                     Stop();
                 }
@@ -55,26 +56,12 @@ namespace FourWays.Game.Objects
 
         private Vector2f move { get; set; }
 
-        public enum Direction
-        {
-            left,
-            right,
-            up,
-            down
-        }
-
-        public enum Status
-        {
-            Stop,
-            Go
-        }
-
         public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, bool> collideTest, Texture texture)
         {
             Guid = Guid.NewGuid();
 
             this.direction = direction;
-            status = Status.Go;
+            status = CarState.Go;
             this.WindowWidth = WindowWidth;
             this.WindowHeight = WindowHeight;
             RoadLight = roadLight;
@@ -82,7 +69,7 @@ namespace FourWays.Game.Objects
             Texture = texture;
 
             ActualSpeed = 0f;
-            AccuracyPourcentage = 0.0;
+            AccuracyPourcentage = 1.0;
 
             Color = Color.Red;
             switch (direction)
@@ -154,13 +141,23 @@ namespace FourWays.Game.Objects
 
         private void AccuracyPourcentageUpdate()
         {
-            if (1 - AccuracyPourcentage < 0.02)
+            double delta = 1 - AccuracyPourcentage;
+
+            if (delta < AccuracyPourcentageStackValue)
             {
                 AccuracyPourcentage = 1;
             }
+            else if (delta > 0.5)
+            {
+                AccuracyPourcentage += (AccuracyPourcentageStackValue * 5);
+            }
+            else if (delta > 0.25)
+            {
+                AccuracyPourcentage += (AccuracyPourcentageStackValue * 3);
+            }
             else
             {
-                AccuracyPourcentage += 0.02;
+                AccuracyPourcentage += AccuracyPourcentageStackValue;
             }
         }
 
@@ -177,28 +174,80 @@ namespace FourWays.Game.Objects
 
         public override void Update()
         {
+            GetInfos();
+            ChooseAnAction();
+        }
+
+        private void GetInfos()
+        {
             LookAtRoadLight();
             LookAtCarsInFront();
+        }
 
-            if (status == Status.Go)
+        private void ChooseAnAction()
+        {
+            switch (status)
             {
-                Move();
+                case CarState.Go:
+
+                    Move();
+                    break;
+
+                case CarState.Decelerate:
+
+                    Decelerate();
+                    break;
+
+                default:
+
+                    if (isInTheStopArea() && RoadLight.state == RoadLightState.Red && !isThereSomeOneInFront())
+                    {
+                        Decelerate();
+                        //MoveToRoadLightLigne();
+                    }
+                    break;
             }
-            else if (isInTheStopArea() && RoadLight.state == RoadLight.State.Red && !isThereSomeOneInFront())
+        }
+
+        private void Decelerate()
+        {
+            AccuracyPourcentageUpdateDown();
+            ActualSpeedUpdate();
+        }
+
+        private void AccuracyPourcentageUpdateDown()
+        {
+            if (AccuracyPourcentage < AccuracyPourcentageStackValue)
             {
-                MoveToRoadLightLigne();
+                AccuracyPourcentage = 0;
+            }
+            else if (AccuracyPourcentage < 0.5)
+            {
+                AccuracyPourcentage -= (AccuracyPourcentageStackValue * 5);
+            }
+            else if (AccuracyPourcentage < 0.25)
+            {
+                AccuracyPourcentage -= (AccuracyPourcentageStackValue * 3);
+            }
+            else
+            {
+                AccuracyPourcentage -= (AccuracyPourcentageStackValue);
             }
         }
 
         private void LookAtRoadLight()
         {
-            if (isInTheStopArea() && RoadLight.state == RoadLight.State.Red)
+            if (isInTheStopArea() && RoadLight.state == RoadLightState.Red)
             {
-                status = Status.Stop;
+                status = CarState.Stop;
+            }
+            if (isInTheDecelerateArea() && RoadLight.state == RoadLightState.Red)
+            {
+                status = CarState.Decelerate;
             }
             else
             {
-                status = Status.Go;
+                status = CarState.Go;
             }
         }
 
@@ -206,7 +255,7 @@ namespace FourWays.Game.Objects
         {
             if (isThereSomeOneInFront())
             {
-                status = Status.Stop;
+                status = CarState.Decelerate;
             }
         }
 
@@ -276,11 +325,16 @@ namespace FourWays.Game.Objects
                 return car.Shape.GetGlobalBounds().Intersects(Shape.GetGlobalBounds());
             }
             return false;
-        }
+        } 
 
         internal bool isInTheStopArea()
         {
             return Shape.GetGlobalBounds().Intersects(RoadLight.StopArea.GetGlobalBounds()) && isBehindTheRoadLight();
+        }
+
+        internal bool isInTheDecelerateArea()
+        {
+            return Shape.GetGlobalBounds().Intersects(RoadLight.DecelerateArea.GetGlobalBounds()) && isBehindTheRoadLight();
         }
 
         private bool isBehindTheRoadLight()
@@ -321,5 +375,20 @@ namespace FourWays.Game.Objects
             }
             return false;
         }
+    }
+
+    public enum Direction
+    {
+        left,
+        right,
+        up,
+        down
+    }
+
+    public enum CarState
+    {
+        Stop,
+        Go,
+        Decelerate
     }
 }

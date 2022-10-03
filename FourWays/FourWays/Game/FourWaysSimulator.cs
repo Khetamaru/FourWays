@@ -24,7 +24,7 @@ namespace FourWays.Game
         private List<Car> downRoadCars;
 
         private List<RectangleShape> roadBounds;
-        private Dictionary<Car.Direction, RoadLight> roadLights;
+        private Dictionary<Direction, RoadLight> roadLights;
 
         private Texture OutRoadTexture { get; set; }
         private Texture RoadCenterTexture { get; set; }
@@ -124,41 +124,51 @@ namespace FourWays.Game
             upRoadCars = new List<Car>();
             downRoadCars = new List<Car>();
 
-            roadLights.TryGetValue(Car.Direction.down, out RoadLight temp);
-            downRoadCars.Add(new Car(Car.Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureDown));
+            roadLights.TryGetValue(Direction.down, out RoadLight temp);
+            downRoadCars.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureDown));
 
-            roadLights.TryGetValue(Car.Direction.up, out temp);
-            upRoadCars.Add(new Car(Car.Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureUp));
+            roadLights.TryGetValue(Direction.up, out temp);
+            upRoadCars.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureUp));
 
-            roadLights.TryGetValue(Car.Direction.right, out temp);
-            rightRoadCars.Add(new Car(Car.Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureRight));
+            roadLights.TryGetValue(Direction.right, out temp);
+            rightRoadCars.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureRight));
 
-            roadLights.TryGetValue(Car.Direction.left, out temp);
-            leftRoadCars.Add(new Car(Car.Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
+            roadLights.TryGetValue(Direction.left, out temp);
+            leftRoadCars.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
         }
 
         private void CreateRoadLight()
         {
-            roadLights = new Dictionary<Car.Direction, RoadLight>();
+            roadLights = new Dictionary<Direction, RoadLight>();
             RectangleShape rightStopArea = new RectangleShape(new Vector2f(60f, 40f));
             RectangleShape downStopArea = new RectangleShape(new Vector2f(40f, 60f));
             RectangleShape upStopArea = new RectangleShape(new Vector2f(40f, 60f));
             RectangleShape leftStopArea = new RectangleShape(new Vector2f(60f, 40f));
+
+            RectangleShape rightDecelerateArea = new RectangleShape(new Vector2f(60f, 40f));
+            RectangleShape downDecelerateArea = new RectangleShape(new Vector2f(40f, 60f));
+            RectangleShape upDecelerateArea = new RectangleShape(new Vector2f(40f, 60f));
+            RectangleShape leftDecelerateArea = new RectangleShape(new Vector2f(60f, 40f));
 
             rightStopArea.Position = new Vector2f(590f - 60f, 430f + 55f);
             downStopArea.Position = new Vector2f(590f + 5f, 430f - 60f);
             upStopArea.Position = new Vector2f(590f + 55f, 430f + +100f);
             leftStopArea.Position = new Vector2f(590f + 100f, 430f + 5f);
 
-            roadLights.Add(Car.Direction.right, new RoadLight(new Vector2f(580f, 535f), Car.Direction.right, rightStopArea, RoadLight.State.Green));
-            roadLights.Add(Car.Direction.down, new RoadLight(new Vector2f(530f, 350f), Car.Direction.down, downStopArea, RoadLight.State.Red));
-            roadLights.Add(Car.Direction.up, new RoadLight(new Vector2f(700f, 535f), Car.Direction.up, upStopArea, RoadLight.State.Red));
-            roadLights.Add(Car.Direction.left, new RoadLight(new Vector2f(700f, 420f), Car.Direction.left, leftStopArea, RoadLight.State.Green));
+            rightDecelerateArea.Position = new Vector2f(590f - 120f, 430f + 55f);
+            downDecelerateArea.Position = new Vector2f(590f + 5f, 430f - 120f);
+            upDecelerateArea.Position = new Vector2f(590f + 55f, 430f + +160f);
+            leftDecelerateArea.Position = new Vector2f(590f + 160f, 430f + 5f);
 
-            roadLights.TryGetValue(Car.Direction.left, out RoadLight tempLeft);
-            roadLights.TryGetValue(Car.Direction.right, out RoadLight tempRight);
-            roadLights.TryGetValue(Car.Direction.up, out RoadLight tempUp);
-            roadLights.TryGetValue(Car.Direction.down, out RoadLight tempDown);
+            roadLights.Add(Direction.right, new RoadLight(new Vector2f(580f, 535f), Direction.right, rightStopArea, rightDecelerateArea, RoadLightState.Green));
+            roadLights.Add(Direction.down, new RoadLight(new Vector2f(530f, 350f), Direction.down, downStopArea, downDecelerateArea, RoadLightState.Red));
+            roadLights.Add(Direction.up, new RoadLight(new Vector2f(700f, 535f), Direction.up, upStopArea, upDecelerateArea, RoadLightState.Red));
+            roadLights.Add(Direction.left, new RoadLight(new Vector2f(700f, 420f), Direction.left, leftStopArea, leftDecelerateArea, RoadLightState.Green));
+
+            roadLights.TryGetValue(Direction.left, out RoadLight tempLeft);
+            roadLights.TryGetValue(Direction.right, out RoadLight tempRight);
+            roadLights.TryGetValue(Direction.up, out RoadLight tempUp);
+            roadLights.TryGetValue(Direction.down, out RoadLight tempDown);
 
             tempLeft.AssignRoadLightLeft(tempUp);
             tempUp.AssignRoadLightLeft(tempRight);
@@ -169,7 +179,7 @@ namespace FourWays.Game
         public override void Update(GameTime gameTime)
         {
             CarGeneration();
-            foreach (KeyValuePair<Car.Direction, RoadLight> roadLight in roadLights)
+            foreach (KeyValuePair<Direction, RoadLight> roadLight in roadLights)
             {
                 roadLight.Value.Update();
             }
@@ -185,43 +195,43 @@ namespace FourWays.Game
             if (GetAllCars().Count < CAR_NUMBER_LIMIT && ASpawnIsEmpty())
             {
                 Car car;
-                Car.Direction direction;
+                Direction direction;
                 RoadLight temp;
 
                 do
                 {
-                    direction = (Car.Direction)Enum.GetValues(typeof(Car.Direction)).GetValue(new Random().Next(4));
-                    roadLights.TryGetValue(Car.Direction.left, out temp);
+                    direction = (Direction)Enum.GetValues(typeof(Direction)).GetValue(new Random().Next(4));
+                    roadLights.TryGetValue(Direction.left, out temp);
                     car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft);
                 }
                 while (CollisionTest(car));
 
                 switch (car.direction)
                 {
-                    case Car.Direction.left:
+                    case Direction.left:
 
-                        roadLights.TryGetValue(Car.Direction.left, out temp);
+                        roadLights.TryGetValue(Direction.left, out temp);
                         car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft);
                         leftRoadCars.Add(car);
                         break;
 
-                    case Car.Direction.right:
+                    case Direction.right:
 
-                        roadLights.TryGetValue(Car.Direction.right, out temp);
+                        roadLights.TryGetValue(Direction.right, out temp);
                         car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureRight);
                         rightRoadCars.Add(car);
                         break;
 
-                    case Car.Direction.up:
+                    case Direction.up:
 
-                        roadLights.TryGetValue(Car.Direction.up, out temp);
+                        roadLights.TryGetValue(Direction.up, out temp);
                         car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureUp);
                         upRoadCars.Add(car);
                         break;
 
-                    case Car.Direction.down:
+                    case Direction.down:
 
-                        roadLights.TryGetValue(Car.Direction.down, out temp);
+                        roadLights.TryGetValue(Direction.down, out temp);
                         car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureDown);
                         downRoadCars.Add(car);
                         break;
@@ -232,11 +242,11 @@ namespace FourWays.Game
         private bool ASpawnIsEmpty()
         {
             List<Car> cars = new List<Car>();
-            roadLights.TryGetValue(Car.Direction.left, out RoadLight temp);
-            cars.Add(new Car(Car.Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
-            cars.Add(new Car(Car.Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
-            cars.Add(new Car(Car.Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
-            cars.Add(new Car(Car.Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
+            roadLights.TryGetValue(Direction.left, out RoadLight temp);
+            cars.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
+            cars.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
+            cars.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
+            cars.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
 
             foreach (Car car in cars)
             {
@@ -318,22 +328,22 @@ namespace FourWays.Game
             {
                 switch (car.direction)
                 {
-                    case Car.Direction.left:
+                    case Direction.left:
 
                         leftRoadCars.Remove(car);
                         break;
 
-                    case Car.Direction.right:
+                    case Direction.right:
 
                         rightRoadCars.Remove(car);
                         break;
 
-                    case Car.Direction.up:
+                    case Direction.up:
 
                         upRoadCars.Remove(car);
                         break;
 
-                    case Car.Direction.down:
+                    case Direction.down:
 
                         downRoadCars.Remove(car);
                         break;
@@ -368,7 +378,7 @@ namespace FourWays.Game
 
         private void DrawRoadLights()
         {
-            foreach (KeyValuePair<Car.Direction, RoadLight> roadLight in roadLights)
+            foreach (KeyValuePair<Direction, RoadLight> roadLight in roadLights)
             {
                 Window.Draw(roadLight.Value.Image);
                 //Window.Draw(roadLight.Value.StopArea);

@@ -18,3 +18,11 @@ FourWays/FourWays/obj/FourWays.csproj.nuget.dgspec.json
 *.targets
 
 FourWays/FourWays/obj/project.assets.json
+
+*.v2
+
+*.dll
+
+*.pdb
+
+FourWays/FourWays/obj/Debug/net5.0/FourWays.csproj.FileListAbsolute.txt
