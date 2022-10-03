@@ -10,7 +10,7 @@ namespace FourWays.Game.Objects
         private uint WindowHeight;
 
         private const float SecurityDistance = 5f;
-        private const float Speed = 4f;
+        private const float MaxSpeed = 6f;
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
 
@@ -22,6 +22,8 @@ namespace FourWays.Game.Objects
         private RoadLight RoadLight { get; }
         private Color Color { get; set; }
         private Direction actualDirection { get; set; }
+        private float ActualSpeed { get; set; }
+        private double AccuracyPourcentage { get; set; }
         public Direction direction
         {
             get
@@ -34,7 +36,23 @@ namespace FourWays.Game.Objects
                 AssignMove(value);
             }
         }
-        public Status status { get; set; }
+        public Status ActualStatus { get; set; }
+        public Status status 
+        {
+            get
+            {
+                return ActualStatus;
+            }
+            set
+            {
+                ActualStatus = value;
+                if (value == Status.Stop)
+                {
+                    Stop();
+                }
+            }
+        }
+
         private Vector2f move { get; set; }
 
         public enum Direction
@@ -62,6 +80,9 @@ namespace FourWays.Game.Objects
             RoadLight = roadLight;
             CollideTest = collideTest;
             Texture = texture;
+
+            ActualSpeed = 0f;
+            AccuracyPourcentage = 0.0;
 
             Color = Color.Red;
             switch (direction)
@@ -120,7 +141,38 @@ namespace FourWays.Game.Objects
 
         private void Move()
         {
-            Shape.Position = new Vector2f(Shape.Position.X + (move.X * Speed), Shape.Position.Y + (move.Y * Speed));
+            AccuracyEvolution();
+
+            Shape.Position = new Vector2f(Shape.Position.X + (move.X * ActualSpeed), Shape.Position.Y + (move.Y * ActualSpeed));
+        }
+
+        private void AccuracyEvolution()
+        {
+            AccuracyPourcentageUpdate();
+            ActualSpeedUpdate();
+        }
+
+        private void AccuracyPourcentageUpdate()
+        {
+            if (1 - AccuracyPourcentage < 0.02)
+            {
+                AccuracyPourcentage = 1;
+            }
+            else
+            {
+                AccuracyPourcentage += 0.02;
+            }
+        }
+
+        private void ActualSpeedUpdate()
+        {
+            ActualSpeed = (float)(MaxSpeed * AccuracyPourcentage);
+        }
+
+        private void Stop()
+        {
+            ActualSpeed = 0f;
+            AccuracyPourcentage = 0.0;
         }
 
         public override void Update()
@@ -160,9 +212,9 @@ namespace FourWays.Game.Objects
 
         private void MoveToRoadLightLigne()
         {
-            float x = Math.Abs(Speed * move.X);
+            float x = Math.Abs(MaxSpeed * move.X);
             float x2 = Math.Abs(Shape.Position.X - RoadLight.StopArea.Position.X);
-            float y = Math.Abs(Speed * move.Y);
+            float y = Math.Abs(MaxSpeed * move.Y);
             float y2 = Math.Abs(Shape.Position.Y - RoadLight.StopArea.Position.Y);
 
             switch (direction)
@@ -246,7 +298,7 @@ namespace FourWays.Game.Objects
         internal bool isThereSomeOneInFront()
         {
             RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X, Shape.Size.Y));
-            shape.Position = new Vector2f(Shape.Position.X + (SecurityDistance * Speed * move.X), Shape.Position.Y + (SecurityDistance * Speed * move.Y));
+            shape.Position = new Vector2f(Shape.Position.X + (SecurityDistance * MaxSpeed * move.X), Shape.Position.Y + (SecurityDistance * MaxSpeed * move.Y));
 
             Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture);
             car.Guid = Guid;
