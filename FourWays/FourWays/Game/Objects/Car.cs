@@ -47,10 +47,6 @@ namespace FourWays.Game.Objects
             set
             {
                 ActualStatus = value;
-                if (value == CarState.Stop)
-                {
-                    Stop();
-                }
             }
         }
 
@@ -126,13 +122,6 @@ namespace FourWays.Game.Objects
             }
         }
 
-        private void Move()
-        {
-            AccuracyEvolution();
-
-            Shape.Position = new Vector2f(Shape.Position.X + (move.X * ActualSpeed), Shape.Position.Y + (move.Y * ActualSpeed));
-        }
-
         private void AccuracyEvolution()
         {
             AccuracyPourcentageUpdate();
@@ -166,18 +155,6 @@ namespace FourWays.Game.Objects
             ActualSpeed = (float)(MaxSpeed * AccuracyPourcentage);
         }
 
-        private void Stop()
-        {
-            ActualSpeed = 0f;
-            AccuracyPourcentage = 0.0;
-        }
-
-        public override void Update()
-        {
-            GetInfos();
-            ChooseAnAction();
-        }
-
         private void GetInfos()
         {
             LookAtRoadLight();
@@ -207,12 +184,6 @@ namespace FourWays.Game.Objects
                     }
                     break;
             }
-        }
-
-        private void Decelerate()
-        {
-            AccuracyPourcentageUpdateDown();
-            ActualSpeedUpdate();
         }
 
         private void AccuracyPourcentageUpdateDown()
@@ -375,6 +346,56 @@ namespace FourWays.Game.Objects
             }
             return false;
         }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        public override void Update()
+        {
+            GetInfos();
+            ChooseAnAction();
+        }
+
+        private void Move()
+        {
+            AccuracyEvolution();
+
+            Shape.Position = new Vector2f(Shape.Position.X + (move.X * ActualSpeed), Shape.Position.Y + (move.Y * ActualSpeed));
+        }
+
+        private void Decelerate()
+        {
+            AccuracyPourcentageUpdateDown();
+            ActualSpeedUpdate();
+        }
+
+        private void MoveForward() 
+        {
+            // do something
+
+            Move();
+        }
+        private void MoveBack()
+        {
+            // do something
+
+            Move();
+        }
+        private void SlowDown(float brakePower)
+        {
+            // do something
+
+            Move();
+        }
+        private void Turn(Vector2f NewDirection)
+        {
+            // do something
+
+            Move();
+        }
+
+        private void LookForward() { }
+        private void LookBack() { }
     }
 
     public enum Direction
