@@ -358,8 +358,7 @@ namespace FourWays.Game.Objects
 
         private void Move()
         {
-            AccuracyEvolution();
-
+            ActualSpeedUpdate();
             Shape.Position = new Vector2f(Shape.Position.X + (move.X * ActualSpeed), Shape.Position.Y + (move.Y * ActualSpeed));
         }
 
@@ -383,16 +382,25 @@ namespace FourWays.Game.Objects
         }
         private void SlowDown(float brakePower)
         {
-            // do something
+            brake(brakePower);
 
             Move();
         }
+
+        private void brake(float brakePower)
+        {
+            AccuracyPourcentage = AccuracyPourcentage < brakePower ? 0 : AccuracyPourcentage - brakePower;
+        }
+
         private void Turn(Vector2f NewDirection)
         {
             // do something
 
             Move();
         }
+
+        private void UpgradeCore() { }
+        private void DowngradeCore() { }
 
         private void LookForward() { }
         private void LookBack() { }
