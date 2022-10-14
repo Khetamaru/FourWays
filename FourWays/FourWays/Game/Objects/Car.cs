@@ -21,10 +21,8 @@ namespace FourWays.Game.Objects
         public Guid Guid;
         public RectangleShape Shape { get; private set; }
         private RoadLight RoadLight { get; }
-        private Color Color { get; set; }
-        private Direction actualDirection { get; set; }
-        private float ActualSpeed { get; set; }
-        private double AccuracyPourcentage { get; set; }
+
+        private Direction actualDirection;
         public Direction direction
         {
             get
@@ -37,7 +35,8 @@ namespace FourWays.Game.Objects
                 AssignMove(value);
             }
         }
-        public CarState ActualStatus { get; set; }
+
+        public CarState ActualStatus;
         public CarState status 
         {
             get
@@ -50,7 +49,9 @@ namespace FourWays.Game.Objects
             }
         }
 
-        private Vector2f move { get; set; }
+        private Vector2f move;
+
+        private VehiculeCore Core;
 
         public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, bool> collideTest, Texture texture)
         {
@@ -64,10 +65,6 @@ namespace FourWays.Game.Objects
             CollideTest = collideTest;
             Texture = texture;
 
-            ActualSpeed = 0f;
-            AccuracyPourcentage = 1.0;
-
-            Color = Color.Red;
             switch (direction)
             {
                 case Direction.down:
@@ -94,6 +91,8 @@ namespace FourWays.Game.Objects
                     break;
             }
             Shape.Texture = Texture;
+
+            Core = new VehiculeCore(0f, VehiculeCore.Speed.One);
         }
 
         private void AssignMove(Direction direction)
@@ -120,39 +119,6 @@ namespace FourWays.Game.Objects
                     move = new Vector2f(0, 1);
                     break;
             }
-        }
-
-        private void AccuracyEvolution()
-        {
-            AccuracyPourcentageUpdate();
-            ActualSpeedUpdate();
-        }
-
-        private void AccuracyPourcentageUpdate()
-        {
-            double delta = 1 - AccuracyPourcentage;
-
-            if (delta < AccuracyPourcentageStackValue)
-            {
-                AccuracyPourcentage = 1;
-            }
-            else if (delta > 0.5)
-            {
-                AccuracyPourcentage += (AccuracyPourcentageStackValue * 5);
-            }
-            else if (delta > 0.25)
-            {
-                AccuracyPourcentage += (AccuracyPourcentageStackValue * 3);
-            }
-            else
-            {
-                AccuracyPourcentage += AccuracyPourcentageStackValue;
-            }
-        }
-
-        private void ActualSpeedUpdate()
-        {
-            ActualSpeed = (float)(MaxSpeed * AccuracyPourcentage);
         }
 
         private void GetInfos()
@@ -183,26 +149,6 @@ namespace FourWays.Game.Objects
                         //MoveToRoadLightLigne();
                     }
                     break;
-            }
-        }
-
-        private void AccuracyPourcentageUpdateDown()
-        {
-            if (AccuracyPourcentage < AccuracyPourcentageStackValue)
-            {
-                AccuracyPourcentage = 0;
-            }
-            else if (AccuracyPourcentage < 0.5)
-            {
-                AccuracyPourcentage -= (AccuracyPourcentageStackValue * 5);
-            }
-            else if (AccuracyPourcentage < 0.25)
-            {
-                AccuracyPourcentage -= (AccuracyPourcentageStackValue * 3);
-            }
-            else
-            {
-                AccuracyPourcentage -= (AccuracyPourcentageStackValue);
             }
         }
 
@@ -358,14 +304,7 @@ namespace FourWays.Game.Objects
 
         private void Move()
         {
-            ActualSpeedUpdate();
-            Shape.Position = new Vector2f(Shape.Position.X + (move.X * ActualSpeed), Shape.Position.Y + (move.Y * ActualSpeed));
-        }
-
-        private void Decelerate()
-        {
-            AccuracyPourcentageUpdateDown();
-            ActualSpeedUpdate();
+            Shape.Position = new Vector2f((float)(Shape.Position.X + (move.X * Core.RotationSpeed)), (float)(Shape.Position.Y + (move.Y * Core.RotationSpeed)));
         }
 
         private void MoveForward() 
@@ -374,22 +313,21 @@ namespace FourWays.Game.Objects
 
             Move();
         }
+
         private void MoveBack()
         {
             // do something
 
             Move();
         }
-        private void SlowDown(float brakePower)
+        private void SpeedUp(float moveStrength)
         {
-            brake(brakePower);
-
-            Move();
+            Core.SpeedUp(moveStrength);
         }
 
-        private void brake(float brakePower)
+        private void SlowDown(float moveStrength)
         {
-            AccuracyPourcentage = AccuracyPourcentage < brakePower ? 0 : AccuracyPourcentage - brakePower;
+            Core.Slowdown(moveStrength);
         }
 
         private void Turn(Vector2f NewDirection)
@@ -399,13 +337,19 @@ namespace FourWays.Game.Objects
             Move();
         }
 
-        private void UpgradeCore() { }
-        private void DowngradeCore() { }
+        private void UpgradeCore() 
+        {
+            Core.UpgradeCore();
+        }
+        private void DowngradeCore()
+        {
+            Core.DowngradeCore();
+        }
 
         private void LookForward() { }
         private void LookBack() { }
     }
-
+ 
     public enum Direction
     {
         left,

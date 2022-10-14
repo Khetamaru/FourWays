@@ -25,9 +25,9 @@ namespace FourWays.Game.Objects
         public const string ORANGE_LIGHT_PATH = "./Ressources/traffic-lights-orange.png";
         public const string RED_LIGHT_PATH = "./Ressources/traffic-lights-red.png";
 
-        private Texture RoadLightGreen { get; set; }
-        private Texture RoadLightOrange { get; set; }
-        private Texture RoadLightRed { get; set; }
+        private Texture RoadLightGreen;
+        private Texture RoadLightOrange;
+        private Texture RoadLightRed;
 
         public RectangleShape Image { get; private set; }
 

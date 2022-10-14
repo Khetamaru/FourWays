@@ -26,10 +26,10 @@ namespace FourWays.Game
         private List<RectangleShape> roadBounds;
         private Dictionary<Direction, RoadLight> roadLights;
 
-        private Texture OutRoadTexture { get; set; }
-        private Texture RoadCenterTexture { get; set; }
-        private Texture RoadHorizontalTexture { get; set; }
-        private Texture RoadVerticalTexture { get; set; }
+        private Texture OutRoadTexture;
+        private Texture RoadCenterTexture;
+        private Texture RoadHorizontalTexture;
+        private Texture RoadVerticalTexture;
         public Texture CarTextureRight { get; private set; }
         public Texture CarTextureLeft { get; private set; }
         public Texture CarTextureUp { get; private set; }
