@@ -10,7 +10,7 @@ namespace FourWays.Game.Objects
 {
     public class RoadLight : GameObject
     {
-        public const float TIME_UNTIL_UPDATE = 2f;
+        internal const float TIME_UNTIL_UPDATE = 2f;
 
         float totalTimeBeforeUpdate = 0f;
         float previousTimeElapsed = 0f;
@@ -21,20 +21,20 @@ namespace FourWays.Game.Objects
 
         Clock clock = new Clock();
 
-        public const string GREEN_LIGHT_PATH = "./Ressources/traffic-lights-green.png";
-        public const string ORANGE_LIGHT_PATH = "./Ressources/traffic-lights-orange.png";
-        public const string RED_LIGHT_PATH = "./Ressources/traffic-lights-red.png";
+        internal const string GREEN_LIGHT_PATH = "./Ressources/traffic-lights-green.png";
+        internal const string ORANGE_LIGHT_PATH = "./Ressources/traffic-lights-orange.png";
+        internal const string RED_LIGHT_PATH = "./Ressources/traffic-lights-red.png";
 
         private Texture RoadLightGreen;
         private Texture RoadLightOrange;
         private Texture RoadLightRed;
 
-        public RectangleShape Image { get; private set; }
+        internal RectangleShape Image { get; private set; }
 
-        public Direction direction;
+        internal Direction direction;
 
         private RoadLightState actualState;
-        public RoadLightState state 
+        internal RoadLightState state 
         { 
             get
             {
@@ -47,8 +47,8 @@ namespace FourWays.Game.Objects
             } 
         }
 
-        public RectangleShape StopArea;
-        public RectangleShape DecelerateArea;
+        internal RectangleShape StopArea;
+        internal RectangleShape DecelerateArea;
 
         public RoadLight(Vector2f position, Direction direction, RectangleShape StopArea, RectangleShape DecelerateArea, RoadLightState startLight) 
         {
@@ -56,7 +56,7 @@ namespace FourWays.Game.Objects
             Initialize(position, direction, StopArea, DecelerateArea, startLight);
         }
 
-        public void LoadContent()
+        internal void LoadContent()
         {
             RoadLightGreen = new Texture(new Image(GREEN_LIGHT_PATH));
             RoadLightOrange = new Texture(new Image(ORANGE_LIGHT_PATH));
@@ -90,7 +90,7 @@ namespace FourWays.Game.Objects
             }
         }
 
-        public override void Update()
+        internal override void Update()
         {
             if (RoadLightLeft.state != RoadLightState.Green && state == RoadLightState.Red || state != RoadLightState.Red)
             {
@@ -148,7 +148,7 @@ namespace FourWays.Game.Objects
             }
         }
 
-        public void AssignRoadLightLeft(RoadLight roadLight)
+        internal void AssignRoadLightLeft(RoadLight roadLight)
         {
             RoadLightLeft = roadLight;
         }

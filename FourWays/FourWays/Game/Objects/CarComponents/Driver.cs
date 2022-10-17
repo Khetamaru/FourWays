@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FourWays.Game.Objects
+namespace FourWays.Game.Objects.CarFactory.CarComponents
 {
     public class Driver
     {

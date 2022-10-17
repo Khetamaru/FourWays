@@ -7,15 +7,15 @@ namespace FourWays.Game
 {
     public static class DebugUtility
     {
-        public const string CONSOLE_FONT_PATH = "./fonts/arial.ttf";
-        public static Font consoleFont;
+        internal const string CONSOLE_FONT_PATH = "./fonts/arial.ttf";
+        internal static Font consoleFont;
 
-        public static void LoadContent()
+        internal static void LoadContent()
         {
             consoleFont = new Font(CONSOLE_FONT_PATH);
         }
 
-        public static void DrawPerformanceData(GameLoop gameLoop, Color fontColor)
+        internal static void DrawPerformanceData(GameLoop gameLoop, Color fontColor)
         {
             if (consoleFont == null)
             {

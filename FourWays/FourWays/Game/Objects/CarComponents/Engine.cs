@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace FourWays.Game.Objects
+namespace FourWays.Game.Objects.CarFactory.CarComponents
 {
-    public class VehiculeCore
+    public class Engine
     {
-        public double RotationSpeed { get; private set; }
+        internal double RotationSpeed { get; private set; }
         private Speed speed;
 
         public enum Speed
@@ -17,13 +17,13 @@ namespace FourWays.Game.Objects
             Five
         }
 
-        public VehiculeCore(float startRotationSpeed, Speed startSpeed)
+        public Engine(float startRotationSpeed, Speed startSpeed)
         {
             RotationSpeed = startRotationSpeed;
             speed = startSpeed;
         }
 
-        public bool Slowdown(float moveStrength)
+        internal bool Slowdown(float moveStrength)
         {
             if (SpeedLimitTestDown())
             {
@@ -43,7 +43,7 @@ namespace FourWays.Game.Objects
                 Speed.Three => !(RotationSpeed < 0.4),
                 Speed.Four => !(RotationSpeed < 0.6),
                 Speed.Five => !(RotationSpeed < 0.8),
-                _ => throw new System.InvalidOperationException()
+                _ => throw new InvalidOperationException()
             };
         }
 
@@ -56,11 +56,11 @@ namespace FourWays.Game.Objects
                 Speed.Three => !(RotationSpeed - moveStrength < 0.4) ? 0.4 : RotationSpeed - moveStrength,
                 Speed.Four => !(RotationSpeed - moveStrength < 0.6) ? 0.6 : RotationSpeed - moveStrength,
                 Speed.Five => !(RotationSpeed - moveStrength < 0.8) ? 0.8 : RotationSpeed - moveStrength,
-                _ => throw new System.InvalidOperationException()
+                _ => throw new InvalidOperationException()
             };
         }
 
-        public bool SpeedUp(float moveStrength)
+        internal bool SpeedUp(float moveStrength)
         {
             if (SpeedLimitTestUp())
             {
@@ -80,7 +80,7 @@ namespace FourWays.Game.Objects
                 Speed.Three => !(RotationSpeed > 0.6),
                 Speed.Four => !(RotationSpeed > 0.8),
                 Speed.Five => !(RotationSpeed > 1),
-                _ => throw new System.InvalidOperationException()
+                _ => throw new InvalidOperationException()
             };
         }
 
@@ -93,16 +93,16 @@ namespace FourWays.Game.Objects
                 Speed.Three => !(RotationSpeed - moveStrength > 0.6) ? 0.6 : RotationSpeed + moveStrength,
                 Speed.Four => !(RotationSpeed - moveStrength > 0.8) ? 0.8 : RotationSpeed + moveStrength,
                 Speed.Five => !(RotationSpeed - moveStrength > 1) ? 1 : RotationSpeed + moveStrength,
-                _ => throw new System.InvalidOperationException()
+                _ => throw new InvalidOperationException()
             };
         }
 
-        public void UpgradeCore() 
+        internal void UpgradeCore()
         {
-            if(!SpeedLimitTestUp() && speed != Speed.Five) speed++;
+            if (!SpeedLimitTestUp() && speed != Speed.Five) speed++;
         }
 
-        public void DowngradeCore()
+        internal void DowngradeCore()
         {
             if (!SpeedLimitTestDown() && speed != Speed.Back) speed--;
         }

@@ -1,4 +1,5 @@
-﻿using SFML.Graphics;
+﻿using FourWays.Game.Objects.CarFactory.CarComponents;
+using SFML.Graphics;
 using SFML.System;
 using System;
 
@@ -16,14 +17,14 @@ namespace FourWays.Game.Objects
         private const double AccuracyPourcentageStackValue = 0.002;
 
         Func<Car, bool> CollideTest { get; }
-        public Texture Texture { get; }
+        internal Texture Texture { get; }
 
-        public Guid Guid;
-        public RectangleShape Shape { get; private set; }
+        internal Guid Guid;
+        internal RectangleShape Shape { get; private set; }
         private RoadLight RoadLight { get; }
 
         private Direction actualDirection;
-        public Direction direction
+        internal Direction direction
         {
             get
             {
@@ -36,8 +37,8 @@ namespace FourWays.Game.Objects
             }
         }
 
-        public CarState ActualStatus;
-        public CarState status 
+        internal CarState ActualStatus;
+        internal CarState status
         {
             get
             {
@@ -51,7 +52,7 @@ namespace FourWays.Game.Objects
 
         private Vector2f move;
 
-        private VehiculeCore Core;
+        private Engine Core;
 
         public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, bool> collideTest, Texture texture)
         {
@@ -69,30 +70,30 @@ namespace FourWays.Game.Objects
             {
                 case Direction.down:
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
-                    Shape.Position = new Vector2f((WindowWidth / 2) - 45f, 0f);
+                    Shape.Position = new Vector2f(WindowWidth / 2 - 45f, 0f);
                     break;
 
                 case Direction.up:
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
-                    Shape.Position = new Vector2f((WindowWidth / 2) + 5f, WindowHeight);
+                    Shape.Position = new Vector2f(WindowWidth / 2 + 5f, WindowHeight);
 
                     break;
 
                 case Direction.left:
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
-                    Shape.Position = new Vector2f(WindowWidth, (WindowHeight / 2) - 45);
+                    Shape.Position = new Vector2f(WindowWidth, WindowHeight / 2 - 45);
 
                     break;
 
                 case Direction.right:
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
-                    Shape.Position = new Vector2f(0f, (WindowHeight / 2) + 5f);
+                    Shape.Position = new Vector2f(0f, WindowHeight / 2 + 5f);
 
                     break;
             }
             Shape.Texture = Texture;
 
-            Core = new VehiculeCore(0f, VehiculeCore.Speed.One);
+            Core = new Engine(0f, Engine.Speed.One);
         }
 
         private void AssignMove(Direction direction)
@@ -242,7 +243,7 @@ namespace FourWays.Game.Objects
                 return car.Shape.GetGlobalBounds().Intersects(Shape.GetGlobalBounds());
             }
             return false;
-        } 
+        }
 
         internal bool isInTheStopArea()
         {
@@ -269,7 +270,7 @@ namespace FourWays.Game.Objects
         internal bool isThereSomeOneInFront()
         {
             RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X, Shape.Size.Y));
-            shape.Position = new Vector2f(Shape.Position.X + (SecurityDistance * MaxSpeed * move.X), Shape.Position.Y + (SecurityDistance * MaxSpeed * move.Y));
+            shape.Position = new Vector2f(Shape.Position.X + SecurityDistance * MaxSpeed * move.X, Shape.Position.Y + SecurityDistance * MaxSpeed * move.Y);
 
             Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture);
             car.Guid = Guid;
@@ -296,7 +297,7 @@ namespace FourWays.Game.Objects
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public override void Update()
+        internal override void Update()
         {
             GetInfos();
             ChooseAnAction();
@@ -304,10 +305,10 @@ namespace FourWays.Game.Objects
 
         private void Move()
         {
-            Shape.Position = new Vector2f((float)(Shape.Position.X + (move.X * Core.RotationSpeed)), (float)(Shape.Position.Y + (move.Y * Core.RotationSpeed)));
+            Shape.Position = new Vector2f((float)(Shape.Position.X + move.X * Core.RotationSpeed), (float)(Shape.Position.Y + move.Y * Core.RotationSpeed));
         }
 
-        private void MoveForward() 
+        private void MoveForward()
         {
             // do something
 
@@ -337,7 +338,7 @@ namespace FourWays.Game.Objects
             Move();
         }
 
-        private void UpgradeCore() 
+        private void UpgradeCore()
         {
             Core.UpgradeCore();
         }
@@ -349,7 +350,7 @@ namespace FourWays.Game.Objects
         private void LookForward() { }
         private void LookBack() { }
     }
- 
+
     public enum Direction
     {
         left,

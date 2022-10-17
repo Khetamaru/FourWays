@@ -13,6 +13,6 @@ namespace FourWays.Game.Objects
 
         }
 
-        public abstract void Update();
+        internal abstract void Update();
     }
 }
