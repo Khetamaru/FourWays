@@ -64,7 +64,6 @@ namespace FourWays.Game.Objects
             this.WindowHeight = WindowHeight;
             RoadLight = roadLight;
             CollideTest = collideTest;
-            Texture = texture;
 
             switch (direction)
             {
@@ -91,7 +90,7 @@ namespace FourWays.Game.Objects
 
                     break;
             }
-            Shape.Texture = Texture;
+            if (texture != null) Shape.Texture = texture;
 
             Core = new Engine(0f, Engine.Speed.One);
         }
@@ -139,14 +138,14 @@ namespace FourWays.Game.Objects
 
                 case CarState.Decelerate:
 
-                    Decelerate();
+                    SlowDown(0.001f);
                     break;
 
                 default:
 
                     if (isInTheStopArea() && RoadLight.state == RoadLightState.Red && !isThereSomeOneInFront())
                     {
-                        Decelerate();
+                        SlowDown(0.001f);
                         //MoveToRoadLightLigne();
                     }
                     break;

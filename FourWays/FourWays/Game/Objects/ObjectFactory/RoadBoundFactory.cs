@@ -1,10 +1,6 @@
 ﻿using SFML.Graphics;
 using SFML.System;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FourWays.Game.Objects.ObjectFactory
 {
@@ -47,24 +43,17 @@ namespace FourWays.Game.Objects.ObjectFactory
         internal void GrassSetUp(List<RectangleShape> roadBounds)
         {
             roadBounds.Add(ShapeCreator(GROUND_WIDTH, GROUND_HEIGHT, 0f, 0f, OutRoadTexture));
-
             roadBounds.Add(ShapeCreator(GROUND_WIDTH, GROUND_HEIGHT, 0f, GROUND_HEIGHT + 100f, OutRoadTexture));
-
             roadBounds.Add(ShapeCreator(GROUND_WIDTH, GROUND_HEIGHT, GROUND_WIDTH + 100f, 0f, OutRoadTexture));
-
             roadBounds.Add(ShapeCreator(GROUND_WIDTH, GROUND_HEIGHT, GROUND_WIDTH + 100f, GROUND_HEIGHT + 100f, OutRoadTexture));
         }
 
         internal void RoadSetUp(List<RectangleShape> roadBounds)
         {
             roadBounds.Add(ShapeCreator(100f, 100f, GROUND_WIDTH, GROUND_HEIGHT, RoadCenterTexture));
-
             roadBounds.Add(ShapeCreator(100f, GROUND_HEIGHT, GROUND_WIDTH, 0f, RoadVerticalTexture));
-
             roadBounds.Add(ShapeCreator(100f, GROUND_HEIGHT, GROUND_WIDTH, GROUND_HEIGHT, RoadVerticalTexture));
-
             roadBounds.Add(ShapeCreator(GROUND_WIDTH, 100f, 0f, GROUND_HEIGHT, RoadHorizontalTexture));
-
             roadBounds.Add(ShapeCreator(GROUND_WIDTH, 100f, GROUND_WIDTH + 100f, GROUND_HEIGHT, RoadHorizontalTexture));
         }
 

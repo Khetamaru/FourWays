@@ -24,12 +24,14 @@ namespace FourWays.Game
         private Dictionary<Direction, RoadLight> roadLights;
 
         private CarFactory CarFactory;
-        private RoadBoundFactory RoadLightFactory;
+        private RoadBoundFactory RoadBoundFactory;
+        private RoadLightFactory RoadLightFactory;
 
         public FourWaysSimulator() : base(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, WINDOW_TITLE, Color.White)
         {
             CarFactory = new CarFactory(CollideTest);
-            RoadLightFactory = new RoadBoundFactory();
+            RoadBoundFactory = new RoadBoundFactory();
+            RoadLightFactory = new RoadLightFactory();
         }
 
         internal override void LoadContent()
@@ -37,71 +39,14 @@ namespace FourWays.Game
             DebugUtility.LoadContent();
 
             CarFactory.LoadContent();
-            RoadLightFactory.LoadContent();
+            RoadBoundFactory.LoadContent();
         }
 
         internal override void Initialize()
         {
-            RoadBoundInit();
-            RoadLightInit();
-            CarInit();
-        }
-
-        private void RoadBoundInit()
-        {
-            roadBounds = new List<RectangleShape>();
-
-            RoadLightFactory.RoadBoundInit();
-        }
-
-        private void CarInit()
-        {
-            cars.Add(Direction.left, new List<Car>());
-            cars.Add(Direction.right, new List<Car>());
-            cars.Add(Direction.up, new List<Car>());
-            cars.Add(Direction.down, new List<Car>());
-
-            CarFactory.CarInit(cars, roadLights);
-        }
-
-        private void RoadLightInit()
-        {
-            roadLights = new Dictionary<Direction, RoadLight>();
-
-            RectangleShape rightStopArea = new RectangleShape(new Vector2f(60f, 40f));
-            RectangleShape downStopArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape upStopArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape leftStopArea = new RectangleShape(new Vector2f(60f, 40f));
-
-            RectangleShape rightDecelerateArea = new RectangleShape(new Vector2f(60f, 40f));
-            RectangleShape downDecelerateArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape upDecelerateArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape leftDecelerateArea = new RectangleShape(new Vector2f(60f, 40f));
-
-            rightStopArea.Position = new Vector2f(590f - 60f, 430f + 55f);
-            downStopArea.Position = new Vector2f(590f + 5f, 430f - 60f);
-            upStopArea.Position = new Vector2f(590f + 55f, 430f + +100f);
-            leftStopArea.Position = new Vector2f(590f + 100f, 430f + 5f);
-
-            rightDecelerateArea.Position = new Vector2f(590f - 120f, 430f + 55f);
-            downDecelerateArea.Position = new Vector2f(590f + 5f, 430f - 120f);
-            upDecelerateArea.Position = new Vector2f(590f + 55f, 430f + +160f);
-            leftDecelerateArea.Position = new Vector2f(590f + 160f, 430f + 5f);
-
-            roadLights.Add(Direction.right, new RoadLight(new Vector2f(580f, 535f), Direction.right, rightStopArea, rightDecelerateArea, RoadLightState.Green));
-            roadLights.Add(Direction.down, new RoadLight(new Vector2f(530f, 350f), Direction.down, downStopArea, downDecelerateArea, RoadLightState.Red));
-            roadLights.Add(Direction.up, new RoadLight(new Vector2f(700f, 535f), Direction.up, upStopArea, upDecelerateArea, RoadLightState.Red));
-            roadLights.Add(Direction.left, new RoadLight(new Vector2f(700f, 420f), Direction.left, leftStopArea, leftDecelerateArea, RoadLightState.Green));
-
-            roadLights.TryGetValue(Direction.left, out RoadLight tempLeft);
-            roadLights.TryGetValue(Direction.right, out RoadLight tempRight);
-            roadLights.TryGetValue(Direction.up, out RoadLight tempUp);
-            roadLights.TryGetValue(Direction.down, out RoadLight tempDown);
-
-            tempLeft.AssignRoadLightLeft(tempUp);
-            tempUp.AssignRoadLightLeft(tempRight);
-            tempRight.AssignRoadLightLeft(tempDown);
-            tempDown.AssignRoadLightLeft(tempLeft);
+            roadBounds = RoadBoundFactory.RoadBoundInit();
+            roadLights = RoadLightFactory.RoadLightInit();
+            cars = CarFactory.CarInit(roadLights);
         }
 
         internal override void Update(GameTime gameTime)
@@ -128,14 +73,16 @@ namespace FourWays.Game
 
         private bool ASpawnIsEmpty()
         {
-            List<Car> cars = new List<Car>();
-            roadLights.TryGetValue(Direction.left, out RoadLight temp);
-            cars.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, new Texture(0, 0)));
-            cars.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, new Texture(0, 0)));
-            cars.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, new Texture(0, 0)));
-            cars.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, new Texture(0, 0)));
+            List<Car> TestList = new List<Car>();
 
-            foreach (Car car in cars)
+            roadLights.TryGetValue(Direction.left, out RoadLight temp);
+
+            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null));
+            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null));
+            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null));
+            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null));
+
+            foreach (Car car in TestList)
             {
                 if (!CollisionTest(car))
                 {

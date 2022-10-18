@@ -31,17 +31,23 @@ namespace FourWays.Game.Objects.ObjectFactory
             CarTextureDown = new Texture(new Image("./Ressources/car_down.png"));
         }
 
-        internal void CarInit(Dictionary<Direction, List<Car>> cars, Dictionary<Direction, RoadLight> roadLights)
+        internal Dictionary<Direction, List<Car>> CarInit(Dictionary<Direction, RoadLight> roadLights)
         {
+            Dictionary<Direction, List<Car>> cars = new Dictionary<Direction, List<Car>>();
+
+            cars.Add(Direction.left, new List<Car>());
+            cars.Add(Direction.right, new List<Car>());
+            cars.Add(Direction.up, new List<Car>());
+            cars.Add(Direction.down, new List<Car>());
+
             List<Car> temp;
 
             if (cars.TryGetValue(Direction.down, out temp)) temp.Add(PopACar(roadLights, Direction.down));
-
             if (cars.TryGetValue(Direction.up, out temp)) temp.Add(PopACar(roadLights, Direction.up));
-
             if (cars.TryGetValue(Direction.right, out temp)) temp.Add(PopACar(roadLights, Direction.right));
-
             if (cars.TryGetValue(Direction.left, out temp)) temp.Add(PopACar(roadLights, Direction.left));
+
+            return cars;
         }
 
         internal Car CarCreation(Dictionary<Direction, RoadLight> roadLights)

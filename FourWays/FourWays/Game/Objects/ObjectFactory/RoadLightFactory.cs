@@ -1,10 +1,6 @@
 ﻿using SFML.Graphics;
 using SFML.System;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FourWays.Game.Objects.ObjectFactory
 {
@@ -16,38 +12,42 @@ namespace FourWays.Game.Objects.ObjectFactory
         private const uint GROUND_WIDTH = (DEFAULT_WINDOW_WIDTH - 110) / 2;
         private const uint GROUND_HEIGHT = (DEFAULT_WINDOW_HEIGHT - 100) / 2;
 
-        public RoadLightFactory()
-        {
+        public RoadLightFactory() { }
 
+        internal Dictionary<Direction, RoadLight> RoadLightInit()
+        {
+            Dictionary<Direction, RoadLight> roadLights = new Dictionary<Direction, RoadLight>();
+
+            roadLights.Add(Direction.right, RoadLightCreation(true, Direction.right, GROUND_WIDTH - 10f,  GROUND_HEIGHT + 105f, GROUND_WIDTH - 60f,  GROUND_HEIGHT + 55f,   GROUND_WIDTH - 120f, GROUND_HEIGHT + 55f));
+            roadLights.Add(Direction.down, RoadLightCreation(false, Direction.down,  GROUND_WIDTH - 60f,  GROUND_HEIGHT - 80f,  GROUND_WIDTH + 5f,   GROUND_HEIGHT - 60f,   GROUND_WIDTH + 5f,   GROUND_HEIGHT - 120f));
+            roadLights.Add(Direction.up, RoadLightCreation(  false, Direction.up,    GROUND_WIDTH + 110f, GROUND_HEIGHT + 105f, GROUND_WIDTH + 55f,  GROUND_HEIGHT + +100f, GROUND_WIDTH + 55f,  GROUND_HEIGHT + +160f));
+            roadLights.Add(Direction.left, RoadLightCreation( true, Direction.left,  GROUND_WIDTH + 110f, GROUND_HEIGHT - 10f,  GROUND_WIDTH + 100f, GROUND_HEIGHT + 5f,    GROUND_WIDTH + 160f, GROUND_HEIGHT + 5f));
+
+            RoadLightAlignement(roadLights);
+
+            return roadLights;
         }
 
-        internal Dictionary<Direction, RoadLight> RoadLightInit(Dictionary<Direction, RoadLight> roadLights)
+        private RoadLight RoadLightCreation(bool horizontal, Direction direction, float PositionX, float PositionY, float PositionXStop, float PositionYStop, float PositionXDecelarate, float PositionYDecelarate)
         {
-            RectangleShape rightStopArea = new RectangleShape(new Vector2f(60f, 40f));
-            RectangleShape downStopArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape upStopArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape leftStopArea = new RectangleShape(new Vector2f(60f, 40f));
+            float x;
+            float y;
+            RoadLightState roadLightState;
 
-            RectangleShape rightDecelerateArea = new RectangleShape(new Vector2f(60f, 40f));
-            RectangleShape downDecelerateArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape upDecelerateArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape leftDecelerateArea = new RectangleShape(new Vector2f(60f, 40f));
+            if (horizontal) { x = 60f; y = 40f; roadLightState = RoadLightState.Green; }
+            else {            x = 40f; y = 60f; roadLightState = RoadLightState.Red; }
 
-            rightStopArea.Position = new Vector2f(590f - 60f, 430f + 55f);
-            downStopArea.Position = new Vector2f(590f + 5f, 430f - 60f);
-            upStopArea.Position = new Vector2f(590f + 55f, 430f + +100f);
-            leftStopArea.Position = new Vector2f(590f + 100f, 430f + 5f);
+            RectangleShape StopArea = new RectangleShape(new Vector2f(x, y));
+            RectangleShape DecelerateArea = new RectangleShape(new Vector2f(x, y));
 
-            rightDecelerateArea.Position = new Vector2f(590f - 120f, 430f + 55f);
-            downDecelerateArea.Position = new Vector2f(590f + 5f, 430f - 120f);
-            upDecelerateArea.Position = new Vector2f(590f + 55f, 430f + +160f);
-            leftDecelerateArea.Position = new Vector2f(590f + 160f, 430f + 5f);
+            StopArea.Position = new Vector2f(PositionXStop, PositionYStop);
+            DecelerateArea.Position = new Vector2f(PositionXDecelarate, PositionYDecelarate);
 
-            roadLights.Add(Direction.right, new RoadLight(new Vector2f(580f, 535f), Direction.right, rightStopArea, rightDecelerateArea, RoadLightState.Green));
-            roadLights.Add(Direction.down, new RoadLight(new Vector2f(530f, 350f), Direction.down, downStopArea, downDecelerateArea, RoadLightState.Red));
-            roadLights.Add(Direction.up, new RoadLight(new Vector2f(700f, 535f), Direction.up, upStopArea, upDecelerateArea, RoadLightState.Red));
-            roadLights.Add(Direction.left, new RoadLight(new Vector2f(700f, 420f), Direction.left, leftStopArea, leftDecelerateArea, RoadLightState.Green));
+            return new RoadLight(new Vector2f(PositionX, PositionY), direction, StopArea, DecelerateArea, roadLightState);
+        }
 
+        private void RoadLightAlignement(Dictionary<Direction, RoadLight> roadLights)
+        {
             roadLights.TryGetValue(Direction.left, out RoadLight tempLeft);
             roadLights.TryGetValue(Direction.right, out RoadLight tempRight);
             roadLights.TryGetValue(Direction.up, out RoadLight tempUp);
@@ -57,19 +57,6 @@ namespace FourWays.Game.Objects.ObjectFactory
             tempUp.AssignRoadLightLeft(tempRight);
             tempRight.AssignRoadLightLeft(tempDown);
             tempDown.AssignRoadLightLeft(tempLeft);
-
-            return roadLights;
-        }
-
-        private (Direction, RoadLight) RoadLightCreation()
-        {
-            RectangleShape rightStopArea = new RectangleShape(new Vector2f(60f, 40f));
-            RectangleShape rightDecelerateArea = new RectangleShape(new Vector2f(60f, 40f));
-
-            rightStopArea.Position = new Vector2f(590f - 60f, 430f + 55f);
-            rightDecelerateArea.Position = new Vector2f(590f - 120f, 430f + 55f);
-
-            return (Direction.right, new RoadLight(new Vector2f(580f, 535f), Direction.right, rightStopArea, rightDecelerateArea, RoadLightState.Green));
         }
     }
 }
