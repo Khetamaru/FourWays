@@ -52,7 +52,7 @@ namespace FourWays.Game.Objects.ObjectFactory
         {
             roadBounds.Add(ShapeCreator(100f, 100f, GROUND_WIDTH, GROUND_HEIGHT, RoadCenterTexture));
             roadBounds.Add(ShapeCreator(100f, GROUND_HEIGHT, GROUND_WIDTH, 0f, RoadVerticalTexture));
-            roadBounds.Add(ShapeCreator(100f, GROUND_HEIGHT, GROUND_WIDTH, GROUND_HEIGHT, RoadVerticalTexture));
+            roadBounds.Add(ShapeCreator(100f, GROUND_HEIGHT, GROUND_WIDTH, GROUND_HEIGHT + 100f, RoadVerticalTexture));
             roadBounds.Add(ShapeCreator(GROUND_WIDTH, 100f, 0f, GROUND_HEIGHT, RoadHorizontalTexture));
             roadBounds.Add(ShapeCreator(GROUND_WIDTH, 100f, GROUND_WIDTH + 100f, GROUND_HEIGHT, RoadHorizontalTexture));
         }

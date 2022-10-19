@@ -56,11 +56,27 @@ namespace FourWays.Game.Objects.ObjectFactory
             Direction direction;
             RoadLight temp;
 
+            Texture texture = CarTextureRight;
             do
             {
                 direction = (Direction)Enum.GetValues(typeof(Direction)).GetValue(new Random().Next(4));
+                switch (direction)
+                {
+                    case Direction.left:
+                        texture = CarTextureLeft;
+                        break;
+                    case Direction.right:
+                        texture = CarTextureRight;
+                        break;
+                    case Direction.up:
+                        texture = CarTextureUp;
+                        break;
+                    case Direction.down:
+                        texture = CarTextureDown;
+                        break;
+                }
                 roadLights.TryGetValue(Direction.left, out temp);
-                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft);
+                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, texture);
             }
             while (CollideTest(car));
 
@@ -70,8 +86,23 @@ namespace FourWays.Game.Objects.ObjectFactory
         private Car PopACar(Dictionary<Direction, RoadLight> roadLights, Direction direction)
         {
             roadLights.TryGetValue(direction, out RoadLight temp);
-
-            return new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft);
+            Texture texture = CarTextureRight;
+            switch (direction)
+            {
+                case Direction.left:
+                    texture = CarTextureLeft;
+                    break;
+                case Direction.right:
+                    texture = CarTextureRight;
+                    break;
+                case Direction.up:
+                    texture = CarTextureUp;
+                    break;
+                case Direction.down:
+                    texture = CarTextureDown;
+                    break;
+            }
+            return new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, texture);
         }
     }
 }
