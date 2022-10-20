@@ -6,6 +6,8 @@ namespace FourWays.Game.Objects.ObjectFactory
 {
     public class CarFactory
     {
+        private Font Arial;
+
         private const uint DEFAULT_WINDOW_WIDTH = 1280;
         private const uint DEFAULT_WINDOW_HEIGHT = 960;
 
@@ -16,8 +18,9 @@ namespace FourWays.Game.Objects.ObjectFactory
         internal Texture CarTextureUp { get; private set; }
         internal Texture CarTextureDown { get; private set; }
 
-        public CarFactory(Func<Car, bool> collideTest)
+        public CarFactory(Func<Car, bool> collideTest, Font arial)
         {
+            Arial = arial;
             CollideTest = collideTest;
 
             LoadContent();
@@ -76,7 +79,7 @@ namespace FourWays.Game.Objects.ObjectFactory
                         break;
                 }
                 roadLights.TryGetValue(Direction.left, out temp);
-                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, texture);
+                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, texture, Arial);
             }
             while (CollideTest(car));
 
@@ -102,7 +105,7 @@ namespace FourWays.Game.Objects.ObjectFactory
                     texture = CarTextureDown;
                     break;
             }
-            return new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, texture);
+            return new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, texture, Arial);
         }
     }
 }

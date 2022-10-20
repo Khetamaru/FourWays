@@ -2,34 +2,33 @@
 using SFML.Graphics;
 using SFML.System;
 using System;
+using System.Collections.Generic;
 
 namespace FourWays.Game.Objects
 {
     public class Car : GameObject
     {
+        private Font Arial;
+
         private uint WindowWidth;
         private uint WindowHeight;
 
-        private const float SecurityDistance = 5f;
+        private const float SecurityDistance = 15f;
         private const float MaxSpeed = 6f;
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
-        private const double AccuracyPourcentageStackValue = 0.002;
 
-        Func<Car, bool> CollideTest { get; }
+        Func<Car, List<Car>> CollideTest { get; }
         internal Texture Texture { get; }
 
         internal Guid Guid;
         internal RectangleShape Shape { get; private set; }
-        private RoadLight RoadLight { get; }
+        internal RoadLight RoadLight { get; }
 
         private Direction actualDirection;
         internal Direction direction
         {
-            get
-            {
-                return actualDirection;
-            }
+            get => actualDirection;
             private set
             {
                 actualDirection = value;
@@ -40,23 +39,19 @@ namespace FourWays.Game.Objects
         internal CarState ActualStatus;
         internal CarState status
         {
-            get
-            {
-                return ActualStatus;
-            }
-            set
-            {
-                ActualStatus = value;
-            }
+            get => ActualStatus;
+            set => ActualStatus = value;
         }
 
         private Vector2f move;
 
-        private Engine Core;
+        internal Engine Engine;
+        private Driver Driver;
 
-        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, bool> collideTest, Texture texture)
+        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Texture texture, Font arial)
         {
             Guid = Guid.NewGuid();
+            Arial = arial;
 
             this.direction = direction;
             status = CarState.Go;
@@ -68,31 +63,33 @@ namespace FourWays.Game.Objects
             switch (direction)
             {
                 case Direction.down:
+
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
                     Shape.Position = new Vector2f(WindowWidth / 2 - 45f, 0f);
                     break;
 
                 case Direction.up:
+
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
                     Shape.Position = new Vector2f(WindowWidth / 2 + 5f, WindowHeight);
-
                     break;
 
                 case Direction.left:
+
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
                     Shape.Position = new Vector2f(WindowWidth, WindowHeight / 2 - 45);
-
                     break;
 
                 case Direction.right:
+
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
                     Shape.Position = new Vector2f(0f, WindowHeight / 2 + 5f);
-
                     break;
             }
             if (texture != null) Shape.Texture = texture;
 
-            Core = new Engine(0f, Engine.Speed.One);
+            Engine = new Engine(Engine.Speed.Five, arial);
+            Driver = new Driver(this);
         }
 
         private void AssignMove(Direction direction)
@@ -121,38 +118,7 @@ namespace FourWays.Game.Objects
             }
         }
 
-        private void GetInfos()
-        {
-            LookAtRoadLight();
-            LookAtCarsInFront();
-        }
-
-        private void ChooseAnAction()
-        {
-            switch (status)
-            {
-                case CarState.Go:
-
-                    Move();
-                    break;
-
-                case CarState.Decelerate:
-
-                    SlowDown(0.001f);
-                    break;
-
-                default:
-
-                    if (isInTheStopArea() && RoadLight.state == RoadLightState.Red && !isThereSomeOneInFront())
-                    {
-                        SlowDown(0.001f);
-                        //MoveToRoadLightLigne();
-                    }
-                    break;
-            }
-        }
-
-        private void LookAtRoadLight()
+        internal void LookAtRoadLights()
         {
             if (isInTheStopArea() && RoadLight.state == RoadLightState.Red)
             {
@@ -168,71 +134,25 @@ namespace FourWays.Game.Objects
             }
         }
 
-        private void LookAtCarsInFront()
+        internal List<Car> LookAtCars()
         {
-            if (isThereSomeOneInFront())
-            {
-                status = CarState.Decelerate;
-            }
-        }
+            float multiplier = (float)Engine.RotationSpeed * 2;
 
-        private void MoveToRoadLightLigne()
-        {
-            float x = Math.Abs(MaxSpeed * move.X);
-            float x2 = Math.Abs(Shape.Position.X - RoadLight.StopArea.Position.X);
-            float y = Math.Abs(MaxSpeed * move.Y);
-            float y2 = Math.Abs(Shape.Position.Y - RoadLight.StopArea.Position.Y);
+            float distanceX = (move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * move.X;
+            float distanceY = (move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * move.Y;
 
-            switch (direction)
-            {
-                case Direction.left:
+            float recenterX = multiplier / 2 * Math.Abs(move.Y);
+            float recenterY = multiplier / 2 * Math.Abs(move.X);
 
-                    if (x < x2)
-                    {
-                        Move();
-                    }
-                    else
-                    {
-                        Shape.Position = new Vector2f(Shape.Position.X - x2, Shape.Position.Y);
-                    }
-                    break;
+            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X * multiplier, Shape.Size.Y * multiplier));
 
-                case Direction.right:
+            shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
 
-                    if (x < x2)
-                    {
-                        Move();
-                    }
-                    else
-                    {
-                        Shape.Position = new Vector2f(Shape.Position.X + x2, Shape.Position.Y);
-                    }
-                    break;
+            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
+            car.Guid = Guid;
+            car.Shape = shape;
 
-                case Direction.up:
-
-                    if (y < y2)
-                    {
-                        Move();
-                    }
-                    else
-                    {
-                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y - y2);
-                    }
-                    break;
-
-                case Direction.down:
-
-                    if (y < y2)
-                    {
-                        Move();
-                    }
-                    else
-                    {
-                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y + y2);
-                    }
-                    break;
-            }
+            return CollideTest.Invoke(car);
         }
 
         internal bool isColliding(Car car)
@@ -266,18 +186,6 @@ namespace FourWays.Game.Objects
             return true;
         }
 
-        internal bool isThereSomeOneInFront()
-        {
-            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X, Shape.Size.Y));
-            shape.Position = new Vector2f(Shape.Position.X + SecurityDistance * MaxSpeed * move.X, Shape.Position.Y + SecurityDistance * MaxSpeed * move.Y);
-
-            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture);
-            car.Guid = Guid;
-            car.Shape = shape;
-
-            return CollideTest.Invoke(car);
-        }
-
         internal bool isOutOfBounds()
         {
             switch (direction)
@@ -298,19 +206,21 @@ namespace FourWays.Game.Objects
 
         internal override void Update()
         {
-            GetInfos();
-            ChooseAnAction();
+            if (direction == Direction.right)
+            {
+                direction = direction;
+            }
+            Driver.Update();
         }
 
         private void Move()
         {
-            Shape.Position = new Vector2f((float)(Shape.Position.X + move.X * Core.RotationSpeed), (float)(Shape.Position.Y + move.Y * Core.RotationSpeed));
+            Shape.Position = new Vector2f((float)(Shape.Position.X + move.X * Engine.RotationSpeed), (float)(Shape.Position.Y + move.Y * Engine.RotationSpeed));
         }
 
-        private void MoveForward()
+        internal void MoveForward(double moveStrength)
         {
-            // do something
-
+            SpeedUp(moveStrength);
             Move();
         }
 
@@ -320,14 +230,15 @@ namespace FourWays.Game.Objects
 
             Move();
         }
-        private void SpeedUp(float moveStrength)
+        private void SpeedUp(double moveStrength)
         {
-            Core.SpeedUp(moveStrength);
+            Engine.SpeedUp(moveStrength);
         }
 
-        private void SlowDown(float moveStrength)
+        internal void SlowDown(double moveStrength)
         {
-            Core.Slowdown(moveStrength);
+            Engine.Slowdown(moveStrength);
+            Move();
         }
 
         private void Turn(Vector2f NewDirection)
@@ -337,13 +248,13 @@ namespace FourWays.Game.Objects
             Move();
         }
 
-        private void UpgradeCore()
+        internal void UpgradeCore()
         {
-            Core.UpgradeCore();
+            Engine.UpgradeCore();
         }
-        private void DowngradeCore()
+        internal void DowngradeCore()
         {
-            Core.DowngradeCore();
+            Engine.DowngradeCore();
         }
 
         private void LookForward() { }

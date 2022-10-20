@@ -1,11 +1,33 @@
-﻿using System;
+﻿using SFML.Graphics;
+using SFML.System;
+using System;
 
 namespace FourWays.Game.Objects.CarFactory.CarComponents
 {
     public class Engine
     {
-        internal double RotationSpeed { get; private set; }
+        private Font Arial;
+        private double rotationSpeed;
+        internal double RotationSpeed 
+        {
+            get => rotationSpeed; 
+            private set
+            {
+                rotationSpeed = Math.Round(value, 2);
+            } 
+        }
         private Speed speed;
+        internal Speed BoxSpeed 
+        {
+            get => speed;
+            set
+            {
+                speed = value;
+                speedTextEdit();
+            }
+        }
+
+        public Text speedText { get; internal set; }
 
         public enum Speed
         {
@@ -17,15 +39,27 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             Five
         }
 
-        public Engine(float startRotationSpeed, Speed startSpeed)
+        public Engine(Speed startSpeed, Font arial)
         {
-            RotationSpeed = startRotationSpeed;
-            speed = startSpeed;
+            Arial = arial;
+
+            BoxSpeed = startSpeed; 
+
+            RotationSpeed = BoxSpeed switch
+            {
+                Speed.Back => -2,
+                Speed.One => 0,
+                Speed.Two => 2,
+                Speed.Three => 4,
+                Speed.Four => 6,
+                Speed.Five => 8,
+                _ => throw new NotImplementedException()
+            };
         }
 
-        internal bool Slowdown(float moveStrength)
+        internal bool Slowdown(double moveStrength)
         {
-            if (SpeedLimitTestDown())
+            if (DownSpeedTest())
             {
                 SlowDownRotationSpeed(moveStrength);
                 return true;
@@ -33,36 +67,41 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             return false;
         }
 
-        private bool SpeedLimitTestDown()
+        internal bool DowngradeTest()
         {
-            return speed switch
+            return BoxSpeed switch
             {
                 Speed.Back => false,
-                Speed.One => !(RotationSpeed < 0),
-                Speed.Two => !(RotationSpeed < 0.2),
-                Speed.Three => !(RotationSpeed < 0.4),
-                Speed.Four => !(RotationSpeed < 0.6),
-                Speed.Five => !(RotationSpeed < 0.8),
+                Speed.One => (RotationSpeed <= 0),
+                Speed.Two => (RotationSpeed <= 2),
+                Speed.Three => (RotationSpeed <= 4),
+                Speed.Four => (RotationSpeed <= 6),
+                Speed.Five => (RotationSpeed <= 8),
                 _ => throw new InvalidOperationException()
             };
+        }
+
+        internal bool DownSpeedTest()
+        {
+            return !DowngradeTest();
         }
 
         private void SlowDownRotationSpeed(double moveStrength)
         {
-            RotationSpeed = speed switch
+            RotationSpeed = BoxSpeed switch
             {
-                Speed.One => !(RotationSpeed - moveStrength < 0) ? 0 : RotationSpeed - moveStrength,
-                Speed.Two => !(RotationSpeed - moveStrength < 0.2) ? 0.2 : RotationSpeed - moveStrength,
-                Speed.Three => !(RotationSpeed - moveStrength < 0.4) ? 0.4 : RotationSpeed - moveStrength,
-                Speed.Four => !(RotationSpeed - moveStrength < 0.6) ? 0.6 : RotationSpeed - moveStrength,
-                Speed.Five => !(RotationSpeed - moveStrength < 0.8) ? 0.8 : RotationSpeed - moveStrength,
-                _ => throw new InvalidOperationException()
+                Speed.One => (RotationSpeed - moveStrength <= 0) ? 0.0000 : RotationSpeed - moveStrength,
+                Speed.Two => (RotationSpeed - moveStrength <= 2) ? 2.0000 : RotationSpeed - moveStrength,
+                Speed.Three => (RotationSpeed - moveStrength <= 4) ? 4.0000 : RotationSpeed - moveStrength,
+                Speed.Four => (RotationSpeed - moveStrength <= 6) ? 6.0000 : RotationSpeed - moveStrength,
+                Speed.Five => (RotationSpeed - moveStrength <= 8) ? 8.0000 : RotationSpeed - moveStrength,
+                Speed.Back => RotationSpeed - moveStrength
             };
         }
 
-        internal bool SpeedUp(float moveStrength)
+        internal bool SpeedUp(double moveStrength)
         {
-            if (SpeedLimitTestUp())
+            if (UpSpeedTest())
             {
                 SpeedUpRotationSpeed(moveStrength);
                 return true;
@@ -70,41 +109,54 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             return false;
         }
 
-        private bool SpeedLimitTestUp()
+        internal bool UpgradeTest()
         {
-            return speed switch
+            return BoxSpeed switch
             {
                 Speed.Back => false,
-                Speed.One => !(RotationSpeed > 0.2),
-                Speed.Two => !(RotationSpeed > 0.4),
-                Speed.Three => !(RotationSpeed > 0.6),
-                Speed.Four => !(RotationSpeed > 0.8),
-                Speed.Five => !(RotationSpeed > 1),
+                Speed.One => (RotationSpeed >= 2),
+                Speed.Two => (RotationSpeed >= 4),
+                Speed.Three => (RotationSpeed >= 6),
+                Speed.Four => (RotationSpeed >= 8),
+                Speed.Five => (RotationSpeed >= 10),
                 _ => throw new InvalidOperationException()
             };
         }
 
+        internal bool UpSpeedTest()
+        {
+            return !UpgradeTest();
+        }
+
         private void SpeedUpRotationSpeed(double moveStrength)
         {
-            RotationSpeed = speed switch
+            RotationSpeed = BoxSpeed switch
             {
-                Speed.One => !(RotationSpeed - moveStrength > 0.2) ? 0.2 : RotationSpeed + moveStrength,
-                Speed.Two => !(RotationSpeed - moveStrength > 0.4) ? 0.4 : RotationSpeed + moveStrength,
-                Speed.Three => !(RotationSpeed - moveStrength > 0.6) ? 0.6 : RotationSpeed + moveStrength,
-                Speed.Four => !(RotationSpeed - moveStrength > 0.8) ? 0.8 : RotationSpeed + moveStrength,
-                Speed.Five => !(RotationSpeed - moveStrength > 1) ? 1 : RotationSpeed + moveStrength,
-                _ => throw new InvalidOperationException()
+                Speed.One => (RotationSpeed + moveStrength >= 2) ? 2.0000 : RotationSpeed + moveStrength,
+                Speed.Two => (RotationSpeed + moveStrength >= 4) ? 4.0000 : RotationSpeed + moveStrength,
+                Speed.Three => (RotationSpeed + moveStrength >= 6) ? 6.0000 : RotationSpeed + moveStrength,
+                Speed.Four => (RotationSpeed + moveStrength >= 8) ? 8.0000 : RotationSpeed + moveStrength,
+                Speed.Five => (RotationSpeed + moveStrength >= 10) ? 10.0000 : RotationSpeed + moveStrength,
+                Speed.Back => RotationSpeed + moveStrength
             };
         }
 
         internal void UpgradeCore()
         {
-            if (!SpeedLimitTestUp() && speed != Speed.Five) speed++;
+            if (UpgradeTest() && BoxSpeed != Speed.Five) BoxSpeed++;
         }
 
         internal void DowngradeCore()
         {
-            if (!SpeedLimitTestDown() && speed != Speed.Back) speed--;
+            if (DowngradeTest() && BoxSpeed > Speed.One) BoxSpeed--;
+        }
+
+        private void speedTextEdit()
+        {
+            speedText = new Text(BoxSpeed.ToString(), Arial, 20);
+            speedText.OutlineThickness = 3;
+            speedText.FillColor = Color.Blue;
+            speedText.OutlineColor = Color.Cyan;
         }
     }
 }
