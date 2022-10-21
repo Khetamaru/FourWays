@@ -11,14 +11,14 @@ namespace FourWays.Game.Objects.ObjectFactory
         private const uint DEFAULT_WINDOW_WIDTH = 1280;
         private const uint DEFAULT_WINDOW_HEIGHT = 960;
 
-        Func<Car, bool> CollideTest { get; }
+        Func<Car, List<Car>> CollideTest { get; }
 
         internal Texture CarTextureRight { get; private set; }
         internal Texture CarTextureLeft { get; private set; }
         internal Texture CarTextureUp { get; private set; }
         internal Texture CarTextureDown { get; private set; }
 
-        public CarFactory(Func<Car, bool> collideTest, Font arial)
+        public CarFactory(Func<Car, List<Car>> collideTest, Font arial)
         {
             Arial = arial;
             CollideTest = collideTest;
@@ -81,7 +81,7 @@ namespace FourWays.Game.Objects.ObjectFactory
                 roadLights.TryGetValue(Direction.left, out temp);
                 car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, texture, Arial);
             }
-            while (CollideTest(car));
+            while (CollideTest(car).Count > 0);
 
             return PopACar(roadLights, direction);
         }

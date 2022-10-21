@@ -43,7 +43,7 @@ namespace FourWays.Game.Objects
             set => ActualStatus = value;
         }
 
-        private Vector2f move;
+        internal Vector2f move;
 
         internal Engine Engine;
         private Driver Driver;
@@ -71,19 +71,19 @@ namespace FourWays.Game.Objects
                 case Direction.up:
 
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
-                    Shape.Position = new Vector2f(WindowWidth / 2 + 5f, WindowHeight);
+                    Shape.Position = new Vector2f(WindowWidth / 2 - 3f, WindowHeight);
                     break;
 
                 case Direction.left:
 
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
-                    Shape.Position = new Vector2f(WindowWidth, WindowHeight / 2 - 45);
+                    Shape.Position = new Vector2f(WindowWidth, WindowHeight / 2 - 42);
                     break;
 
                 case Direction.right:
 
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
-                    Shape.Position = new Vector2f(0f, WindowHeight / 2 + 5f);
+                    Shape.Position = new Vector2f(0f, WindowHeight / 2 + 2f);
                     break;
             }
             if (texture != null) Shape.Texture = texture;
@@ -122,7 +122,7 @@ namespace FourWays.Game.Objects
         {
             if (isInTheStopArea() && RoadLight.state == RoadLightState.Red)
             {
-                status = CarState.Stop;
+                status = CarState.Decelerate;
             }
             if (isInTheDecelerateArea() && RoadLight.state == RoadLightState.Red)
             {
@@ -201,15 +201,23 @@ namespace FourWays.Game.Objects
             return false;
         }
 
+        internal bool IsBehindTheLine()
+        {
+            return direction switch
+            {
+                Direction.left => RoadLight.StopArea.Position.X < Shape.Position.X,
+                Direction.right => RoadLight.StopArea.Position.X > Shape.Position.X,
+                Direction.up => RoadLight.StopArea.Position.Y < Shape.Position.Y,
+                Direction.down => RoadLight.StopArea.Position.Y > Shape.Position.Y,
+                _ => false
+            };
+        }
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         internal override void Update()
         {
-            if (direction == Direction.right)
-            {
-                direction = direction;
-            }
             Driver.Update();
         }
 
