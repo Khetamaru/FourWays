@@ -47,13 +47,12 @@ namespace FourWays.Game.Objects
             } 
         }
 
-        internal RectangleShape StopArea;
-        internal RectangleShape DecelerateArea;
+        internal RectangleShape StopLine;
 
-        public RoadLight(Vector2f position, Direction direction, RectangleShape StopArea, RectangleShape DecelerateArea, RoadLightState startLight) 
+        public RoadLight(Vector2f position, Direction direction, RectangleShape StopLine, RoadLightState startLight) 
         {
             LoadContent();
-            Initialize(position, direction, StopArea, DecelerateArea, startLight);
+            Initialize(position, direction, StopLine, startLight);
         }
 
         internal void LoadContent()
@@ -63,15 +62,14 @@ namespace FourWays.Game.Objects
             RoadLightRed = new Texture(new Image(RED_LIGHT_PATH));
         }
 
-        private void Initialize(Vector2f position, Direction direction, RectangleShape stopArea, RectangleShape decelerateArea, RoadLightState startLight)
+        private void Initialize(Vector2f position, Direction direction, RectangleShape stopLine, RoadLightState startLight)
         {
             Image = new RectangleShape();
             Image.Position = position;
             Image.Size = new Vector2f(48f, 72f);
 
-            StopArea = stopArea;
-            DecelerateArea = decelerateArea;
-            StopArea.FillColor = Color.Cyan;
+            StopLine = stopLine;
+            StopLine.FillColor = Color.Red;
 
             state = startLight;
             this.direction = direction;
@@ -92,7 +90,9 @@ namespace FourWays.Game.Objects
 
         internal override void Update()
         {
-            if (RoadLightLeft.state != RoadLightState.Green && state == RoadLightState.Red || state != RoadLightState.Red)
+            if (RoadLightLeft.state != RoadLightState.Green && 
+                state == RoadLightState.Red/* || 
+                state != RoadLightState.Red*/)
             {
                 totalTimeElapsed = clock.ElapsedTime.AsSeconds();
                 deltaTime = totalTimeElapsed - previousTimeElapsed;

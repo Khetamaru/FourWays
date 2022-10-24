@@ -13,8 +13,7 @@ namespace FourWays.Game.Objects
         private uint WindowWidth;
         private uint WindowHeight;
 
-        private const float SecurityDistance = 15f;
-        private const float MaxSpeed = 6f;
+        internal const float SecurityDistance = 15f;
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
 
@@ -52,164 +51,48 @@ namespace FourWays.Game.Objects
         {
             Guid = Guid.NewGuid();
             Arial = arial;
-
             this.direction = direction;
             status = CarState.Go;
             this.WindowWidth = WindowWidth;
             this.WindowHeight = WindowHeight;
             RoadLight = roadLight;
             CollideTest = collideTest;
-
             switch (direction)
             {
                 case Direction.down:
-
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
                     Shape.Position = new Vector2f(WindowWidth / 2 - 45f, 0f);
                     break;
 
                 case Direction.up:
-
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
                     Shape.Position = new Vector2f(WindowWidth / 2 - 3f, WindowHeight);
                     break;
 
                 case Direction.left:
-
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
                     Shape.Position = new Vector2f(WindowWidth, WindowHeight / 2 - 42);
                     break;
 
                 case Direction.right:
-
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
                     Shape.Position = new Vector2f(0f, WindowHeight / 2 + 2f);
                     break;
             }
             if (texture != null) Shape.Texture = texture;
-
-            Engine = new Engine(Engine.Speed.Five, arial);
+            Engine = new Engine(Engine.Speed.Three, arial);
             Driver = new Driver(this);
         }
 
         private void AssignMove(Direction direction)
         {
-            switch (direction)
+            move = direction switch
             {
-                case Direction.left:
-
-                    move = new Vector2f(-1, 0);
-                    break;
-
-                case Direction.right:
-
-                    move = new Vector2f(1, 0);
-                    break;
-
-                case Direction.up:
-
-                    move = new Vector2f(0, -1);
-                    break;
-
-                case Direction.down:
-
-                    move = new Vector2f(0, 1);
-                    break;
-            }
-        }
-
-        internal void LookAtRoadLights()
-        {
-            if (isInTheStopArea() && RoadLight.state == RoadLightState.Red)
-            {
-                status = CarState.Decelerate;
-            }
-            if (isInTheDecelerateArea() && RoadLight.state == RoadLightState.Red)
-            {
-                status = CarState.Decelerate;
-            }
-            else
-            {
-                status = CarState.Go;
-            }
-        }
-
-        internal List<Car> LookAtCars()
-        {
-            float multiplier = (float)Engine.RotationSpeed * 2;
-
-            float distanceX = (move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * move.X;
-            float distanceY = (move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * move.Y;
-
-            float recenterX = multiplier / 2 * Math.Abs(move.Y);
-            float recenterY = multiplier / 2 * Math.Abs(move.X);
-
-            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X * multiplier, Shape.Size.Y * multiplier));
-
-            shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
-
-            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
-            car.Guid = Guid;
-            car.Shape = shape;
-
-            return CollideTest.Invoke(car);
-        }
-
-        internal bool isColliding(Car car)
-        {
-            if (car.Guid != Guid)
-            {
-                return car.Shape.GetGlobalBounds().Intersects(Shape.GetGlobalBounds());
-            }
-            return false;
-        }
-
-        internal bool isInTheStopArea()
-        {
-            return Shape.GetGlobalBounds().Intersects(RoadLight.StopArea.GetGlobalBounds()) && isBehindTheRoadLight();
-        }
-
-        internal bool isInTheDecelerateArea()
-        {
-            return Shape.GetGlobalBounds().Intersects(RoadLight.DecelerateArea.GetGlobalBounds()) && isBehindTheRoadLight();
-        }
-
-        private bool isBehindTheRoadLight()
-        {
-            switch (direction)
-            {
-                case Direction.left: return Shape.Position.X >= RoadLight.StopArea.Position.X;
-                case Direction.right: return Shape.Position.X <= RoadLight.StopArea.Position.X;
-                case Direction.up: return Shape.Position.Y >= RoadLight.StopArea.Position.Y;
-                case Direction.down: return Shape.Position.Y <= RoadLight.StopArea.Position.Y;
-            }
-            return true;
-        }
-
-        internal bool isOutOfBounds()
-        {
-            switch (direction)
-            {
-                case Direction.down: return Shape.Position.Y > WindowHeight;
-
-                case Direction.up: return Shape.Position.Y + Shape.Size.Y < 0f;
-
-                case Direction.right: return Shape.Position.X > WindowWidth;
-
-                case Direction.left: return Shape.Position.X + Shape.Size.X < 0f;
-            }
-            return false;
-        }
-
-        internal bool IsBehindTheLine()
-        {
-            return direction switch
-            {
-                Direction.left => RoadLight.StopArea.Position.X < Shape.Position.X,
-                Direction.right => RoadLight.StopArea.Position.X > Shape.Position.X,
-                Direction.up => RoadLight.StopArea.Position.Y < Shape.Position.Y,
-                Direction.down => RoadLight.StopArea.Position.Y > Shape.Position.Y,
-                _ => false
+                Direction.left => new Vector2f(-1, 0),
+                Direction.right => new Vector2f(1, 0),
+                Direction.up => new Vector2f(0, -1),
+                Direction.down => new Vector2f(0, 1),
+                _ => throw new NotImplementedException()
             };
         }
 
@@ -232,11 +115,11 @@ namespace FourWays.Game.Objects
             Move();
         }
 
-        private void MoveBack()
+        internal void MoveBack(double moveStrength)
         {
-            // do something
+            if (Engine.BoxSpeed != Engine.Speed.Back) Engine.TryPassBackSpeed();
 
-            Move();
+            SlowDown(moveStrength);
         }
         private void SpeedUp(double moveStrength)
         {
@@ -265,8 +148,107 @@ namespace FourWays.Game.Objects
             Engine.DowngradeCore();
         }
 
-        private void LookForward() { }
-        private void LookBack() { }
+        internal List<Car> LookForward()
+        {
+            float multiplier = (float)Engine.RotationSpeed * 2;
+
+            float distanceX = (move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * move.X;
+            float distanceY = (move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * move.Y;
+
+            float recenterX = multiplier / 2 * Math.Abs(move.Y);
+            float recenterY = multiplier / 2 * Math.Abs(move.X);
+
+            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X * multiplier, Shape.Size.Y * multiplier));
+
+            shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
+
+            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
+            car.Guid = Guid;
+            car.Shape = shape;
+
+            return CollideTest.Invoke(car);
+        }
+        internal List<Car> LookBack()
+        {
+            float multiplier = (float)Engine.RotationSpeed * 2;
+
+            float distanceX = (- move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * - move.X;
+            float distanceY = (- move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * - move.Y;
+
+            float recenterX = multiplier / 2 * Math.Abs(move.Y);
+            float recenterY = multiplier / 2 * Math.Abs(move.X);
+
+            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X * multiplier, Shape.Size.Y * multiplier));
+
+            shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
+
+            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
+            car.Guid = Guid;
+            car.Shape = shape;
+
+            return CollideTest.Invoke(car);
+        }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        internal bool isColliding(Car car)
+        {
+            if (car.Guid != Guid)
+            {
+                return car.Shape.GetGlobalBounds().Intersects(Shape.GetGlobalBounds());
+            }
+            return false;
+        }
+
+        internal bool isBeforeTheStopLine()
+        {
+            return Shape.GetGlobalBounds().Intersects(RoadLight.StopLine.GetGlobalBounds()) && isBehindTheRoadLight();
+        }
+
+        internal RoadLight LookAtRoadLights()
+        {
+            return isBeforeTheStopLine() && RoadLight.state == RoadLightState.Red ? RoadLight : null;
+        }
+
+        private bool isBehindTheRoadLight()
+        {
+            switch (direction)
+            {
+                case Direction.left: return Shape.Position.X >= RoadLight.StopLine.Position.X;
+                case Direction.right: return Shape.Position.X <= RoadLight.StopLine.Position.X;
+                case Direction.up: return Shape.Position.Y >= RoadLight.StopLine.Position.Y;
+                case Direction.down: return Shape.Position.Y <= RoadLight.StopLine.Position.Y;
+            }
+            return true;
+        }
+
+        internal bool isOutOfBounds()
+        {
+            switch (direction)
+            {
+                case Direction.down: return Shape.Position.Y > WindowHeight;
+
+                case Direction.up: return Shape.Position.Y + Shape.Size.Y < 0f;
+
+                case Direction.right: return Shape.Position.X > WindowWidth;
+
+                case Direction.left: return Shape.Position.X + Shape.Size.X < 0f;
+            }
+            return false;
+        }
+
+        internal bool IsBehindTheLine()
+        {
+            return direction switch
+            {
+                Direction.left => RoadLight.StopLine.Position.X < Shape.Position.X,
+                Direction.right => RoadLight.StopLine.Position.X > Shape.Position.X,
+                Direction.up => RoadLight.StopLine.Position.Y < Shape.Position.Y,
+                Direction.down => RoadLight.StopLine.Position.Y > Shape.Position.Y,
+                _ => false
+            };
+        }
     }
 
     public enum Direction
@@ -279,8 +261,8 @@ namespace FourWays.Game.Objects
 
     public enum CarState
     {
-        Stop,
         Go,
-        Decelerate
+        Decelerate,
+        BackForward
     }
 }

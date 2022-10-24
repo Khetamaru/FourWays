@@ -248,7 +248,7 @@ namespace FourWays.Game
             foreach (KeyValuePair<Direction, RoadLight> roadLight in roadLights)
             {
                 Window.Draw(roadLight.Value.Image);
-                //Window.Draw(roadLight.Value.StopArea);
+                Window.Draw(roadLight.Value.StopLine);
             }
         }
 

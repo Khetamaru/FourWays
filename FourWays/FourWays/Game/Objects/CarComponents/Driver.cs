@@ -1,4 +1,5 @@
-﻿using SFML.System;
+﻿using SFML.Graphics;
+using SFML.System;
 using System;
 using System.Collections.Generic;
 
@@ -20,16 +21,32 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             ChooseAnAction(GetInfos());
         }
 
-        private Car GetInfos()
+        private (GameObject, Car) GetInfos()
         {
-            Parent.LookAtRoadLights(); // To Refactorize !!!!!!!!!!!!!!!!!!!!!!!!!
-            return AnalyseCarsSeen(Parent.LookAtCars());
+            RoadLight closestRoadLight = Parent.LookAtRoadLights();
+            Car closestCar = AnalyseCarsSeen(Parent.LookForward());
+            Car closestCarBack = AnalyseCarsSeenBack(Parent.LookBack());
+
+            return (ClosestObstacle(closestRoadLight, closestCar), closestCarBack);
+        }
+
+        private GameObject ClosestObstacle(RoadLight closestRoadLight, Car closestCar)
+        {
+            if (closestRoadLight == null) return closestCar;
+            else if (closestCar == null) return closestRoadLight;
+
+            return GetDistance(closestCar.Shape) < GetDistance(closestRoadLight.StopLine) ? closestCar : closestRoadLight;
         }
 
         private Car AnalyseCarsSeen(List<Car> cars)
         {
             if (cars.Count > 0) TrashNotDangerousCars(cars);
 
+            return cars.Count > 0 ? GetClosestCar(cars) : null;
+        }
+
+        private Car AnalyseCarsSeenBack(List<Car> cars)
+        {
             return cars.Count > 0 ? GetClosestCar(cars) : null;
         }
 
@@ -88,47 +105,91 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
 
         private Car GetClosestCar(List<Car> cars)
         {
-            double distanceTemp = GetDistance(cars[0]);
+            double distanceTemp = GetDistance(cars[0].Shape);
             Car carTemp = cars[0];
 
             foreach(Car car in cars)
             {
-                if (distanceTemp > GetDistance(car))
+                if (distanceTemp > GetDistance(car.Shape))
                 {
-                    distanceTemp = GetDistance(car);
+                    distanceTemp = GetDistance(car.Shape);
                     carTemp = car;
                 }
             }
             return carTemp;
         }
 
-        private double GetDistance(Car car) { return Math.Sqrt(Math.Pow(car.Shape.Position.Y - Parent.Shape.Position.Y, 2) + Math.Pow(car.Shape.Position.Y - Parent.Shape.Position.Y, 2)); }
+        private double GetDistance(RectangleShape shape) { return Math.Sqrt(Math.Pow(shape.Position.Y - Parent.Shape.Position.Y, 2) + Math.Pow(shape.Position.Y - Parent.Shape.Position.Y, 2)); }
 
-        private void ChooseAnAction(Car target)
+        private void ChooseAnAction((GameObject, Car) target)
         {
-            AffectStatus(target);
+            AffectStatus(target.Item1);
 
             switch (Parent.status)
             {
                 case CarState.Go:
 
                     if (Parent.Engine.UpgradeTest()) Parent.UpgradeCore();
-                    Parent.MoveForward(AccuracyPourcentageStackValue / 5);
+                    if (Parent.Engine.BoxSpeed == Engine.Speed.One) Parent.MoveForward(SpeedBoost(AccuracyPourcentageStackValue / 5));
+                    else Parent.MoveForward(AccuracyPourcentageStackValue / 5);
+                    
                     break;
 
                 case CarState.Decelerate:
 
-                    if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
-                    Parent.SlowDown(AnalyseClosestCar(target));
+                    if (target.Item1 as Car != null)
+                    {
+
+                        if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
+                        Parent.SlowDown(AnalyseClosestCar(target.Item1 as Car));
+                    }
+                    else if (target.Item1 as RoadLight != null)
+                    {
+                        if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
+                        Parent.SlowDown(GetSlowStrengthStopLine(target.Item1 as RoadLight));
+                    }
+                    else { throw new ArgumentNullException(); }
+                    break;
+
+                case CarState.BackForward:
+
+                    List<Car> list = Parent.LookBack();
+                    if (list.Count > 0) Parent.MoveBack(AnalyseClosestCarBack(target.Item2));
+                    else
+                    {
+                        if (target.Item1 as Car != null)
+                        {
+
+                            if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
+                            Parent.SlowDown(AnalyseClosestCar(target.Item1 as Car));
+                        }
+                        else if (target.Item1 as RoadLight != null)
+                        {
+                            if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
+                            Parent.SlowDown(GetSlowStrengthStopLine(target.Item1 as RoadLight));
+                        }
+                        else { throw new ArgumentNullException(); }
+                    }
                     break;
             }
         }
 
-        private void AffectStatus(Car target)
+        private static double SpeedBoost(double speed) => speed * 2;
+
+        private double GetSlowStrengthStopLine(RoadLight roadLight)
+        {
+            return 1 / GetDistance(roadLight.StopLine) * AccuracyPourcentageStackValue;
+        }
+
+        private void AffectStatus(GameObject target)
         {
             if (target == null)
             {
                 Parent.status = CarState.Go;
+            }
+            else if ((target as Car) != null && GetDistance((target as Car).Shape) < Car.SecurityDistance)
+            {
+                Parent.status = CarState.BackForward;
             }
             else
             {
@@ -136,17 +197,14 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             }
         }
 
-        private float AnalyseClosestCar(Car car)
+        private float AnalyseClosestCar(Car target)
         {
-            double distance = GetDistance(car);
-            double targetSpeed = car.Engine.RotationSpeed;
+            double distance = 1 / GetDistance(target.Shape);
+            double targetSpeed = target.Engine.RotationSpeed;
             double targetState = 0;
 
-            switch (car.status)
+            switch (target.status)
             {
-                case CarState.Stop:
-                    targetState = 0;
-                    break;
                 case CarState.Go:
                     targetState = 2;
                     break;
@@ -155,8 +213,22 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                     break;
             }
             return (float)((targetSpeed * AccuracyPourcentageStackValue) + 
-                           ((1 / distance) * AccuracyPourcentageStackValue) + 
+                           (distance * AccuracyPourcentageStackValue) + 
                            (targetState * AccuracyPourcentageStackValue));
+        }
+
+        private double AnalyseClosestCarBack(Car target)
+        {
+            double distance = GetDistance(target.Shape);
+            double targetSpeed = 1 / target.Engine.RotationSpeed;
+
+            return (float)((targetSpeed * AccuracyPourcentageStackValue) +
+                           (distance * AccuracyPourcentageStackValue));
+        }
+
+        public enum DriverAction
+        {
+
         }
     }
 }

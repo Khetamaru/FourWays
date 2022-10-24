@@ -1,5 +1,4 @@
 ﻿using SFML.Graphics;
-using SFML.System;
 using System;
 
 namespace FourWays.Game.Objects.CarFactory.CarComponents
@@ -71,7 +70,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
         {
             return BoxSpeed switch
             {
-                Speed.Back => false,
+                Speed.Back => (RotationSpeed >= -2 && RotationSpeed < 0),
                 Speed.One => (RotationSpeed <= 0),
                 Speed.Two => (RotationSpeed <= 2),
                 Speed.Three => (RotationSpeed <= 4),
@@ -151,9 +150,14 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             if (DowngradeTest() && BoxSpeed > Speed.One) BoxSpeed--;
         }
 
+        internal void TryPassBackSpeed()
+        {
+            if (DowngradeTest() && BoxSpeed == Speed.One) BoxSpeed--;
+        }
+
         private void speedTextEdit()
         {
-            speedText = new Text(BoxSpeed.ToString(), Arial, 20);
+            speedText = new Text(((int)BoxSpeed).ToString(), Arial, 20);
             speedText.OutlineThickness = 3;
             speedText.FillColor = Color.Blue;
             speedText.OutlineColor = Color.Cyan;
