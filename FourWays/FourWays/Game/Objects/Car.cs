@@ -1,6 +1,7 @@
 ﻿using FourWays.Game.Objects.CarFactory.CarComponents;
 using SFML.Graphics;
 using SFML.System;
+using SFML.Window;
 using System;
 using System.Collections.Generic;
 
@@ -17,7 +18,9 @@ namespace FourWays.Game.Objects
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
 
-        Func<Car, List<Car>> CollideTest { get; }
+        private Action<RectangleShape> ExternalDrawFunction;
+        private bool BreakPointHighlightTrigger;
+        private Func<Car, List<Car>> CollideTest { get; }
         internal Texture Texture { get; }
 
         internal Guid Guid;
@@ -47,7 +50,7 @@ namespace FourWays.Game.Objects
         internal Engine Engine;
         private Driver Driver;
 
-        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Texture texture, Font arial)
+        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Action<RectangleShape> ExternalDrawFunction, Texture texture, Font arial, bool BreakPointHighlightTrigger)
         {
             Guid = Guid.NewGuid();
             Arial = arial;
@@ -57,6 +60,8 @@ namespace FourWays.Game.Objects
             this.WindowHeight = WindowHeight;
             RoadLight = roadLight;
             CollideTest = collideTest;
+            this.ExternalDrawFunction = ExternalDrawFunction;
+            this.BreakPointHighlightTrigger = BreakPointHighlightTrigger;
             switch (direction)
             {
                 case Direction.down:
@@ -66,12 +71,12 @@ namespace FourWays.Game.Objects
 
                 case Direction.up:
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
-                    Shape.Position = new Vector2f(WindowWidth / 2 - 3f, WindowHeight);
+                    Shape.Position = new Vector2f(WindowWidth / 2 - 3f, WindowHeight - Shape.Size.Y);
                     break;
 
                 case Direction.left:
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
-                    Shape.Position = new Vector2f(WindowWidth, WindowHeight / 2 - 42);
+                    Shape.Position = new Vector2f(WindowWidth - Shape.Size.X, WindowHeight / 2 - 42);
                     break;
 
                 case Direction.right:
@@ -101,7 +106,9 @@ namespace FourWays.Game.Objects
 
         internal override void Update()
         {
+            BreakPointHighlight(true);
             Driver.Update();
+            BreakPointHighlight(false);
         }
 
         private void Move()
@@ -162,7 +169,7 @@ namespace FourWays.Game.Objects
 
             shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
 
-            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
+            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, ExternalDrawFunction, Texture, Arial, BreakPointHighlightTrigger);
             car.Guid = Guid;
             car.Shape = shape;
 
@@ -182,7 +189,7 @@ namespace FourWays.Game.Objects
 
             shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
 
-            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
+            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, ExternalDrawFunction, Texture, Arial, BreakPointHighlightTrigger);
             car.Guid = Guid;
             car.Shape = shape;
 
@@ -203,24 +210,19 @@ namespace FourWays.Game.Objects
 
         internal bool isBeforeTheStopLine()
         {
-            return Shape.GetGlobalBounds().Intersects(RoadLight.StopLine.GetGlobalBounds()) && isBehindTheRoadLight();
+            switch (direction)
+            {
+                case Direction.left: return Shape.Position.X >= RoadLight.StopLine.Position.X;
+                case Direction.right: return Shape.Position.X + Shape.Size.X <= RoadLight.StopLine.Position.X;
+                case Direction.up: return Shape.Position.Y >= RoadLight.StopLine.Position.Y;
+                case Direction.down: return Shape.Position.Y + Shape.Size.Y <= RoadLight.StopLine.Position.Y;
+            }
+            return true;
         }
 
         internal RoadLight LookAtRoadLights()
         {
             return isBeforeTheStopLine() && RoadLight.state == RoadLightState.Red ? RoadLight : null;
-        }
-
-        private bool isBehindTheRoadLight()
-        {
-            switch (direction)
-            {
-                case Direction.left: return Shape.Position.X >= RoadLight.StopLine.Position.X;
-                case Direction.right: return Shape.Position.X <= RoadLight.StopLine.Position.X;
-                case Direction.up: return Shape.Position.Y >= RoadLight.StopLine.Position.Y;
-                case Direction.down: return Shape.Position.Y <= RoadLight.StopLine.Position.Y;
-            }
-            return true;
         }
 
         internal bool isOutOfBounds()
@@ -248,6 +250,29 @@ namespace FourWays.Game.Objects
                 Direction.down => RoadLight.StopLine.Position.Y > Shape.Position.Y,
                 _ => false
             };
+        }
+
+        internal override void BreakPointHighlight(bool switchTrigger)
+        {
+            if(BreakPointHighlightTrigger)
+            {
+                if(switchTrigger)
+                {
+                    RectangleShape shape = new RectangleShape();
+                    shape.Size = Shape.Size;
+                    shape.Position = Shape.Position;
+                    shape.FillColor = Color.White;
+                    ExternalDrawFunction.Invoke(shape);
+                }
+                else
+                {
+                    RectangleShape shape = new RectangleShape();
+                    shape.Size = Shape.Size;
+                    shape.Position = Shape.Position;
+                    shape.FillColor = Color.Blue;
+                    ExternalDrawFunction.Invoke(shape);
+                }
+            }
         }
     }
 

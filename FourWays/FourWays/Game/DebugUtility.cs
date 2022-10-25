@@ -28,7 +28,7 @@ namespace FourWays.Game
 
         private static void DrawPerformanceDataBackgroud(GameLoop gameLoop)
         {
-            RectangleShape background = new RectangleShape(new Vector2f(160f, 90f));
+            RectangleShape background = new RectangleShape(new Vector2f(190f, 90f));
             background.Position = new Vector2f(0f, 0f);
             background.FillColor = Color.Blue;
 
@@ -47,10 +47,19 @@ namespace FourWays.Game
 
         private static void DrawPerformanceDataInfos(GameLoop gameLoop, Color fontColor)
         {
-            string totalTimeElapsedStr = gameLoop.GameTime.TotalTimeElapsed.ToString("0.00");
-            string deltaTimeStr = gameLoop.GameTime.DeltaTime.ToString("0.00000");
-            float fps = 1f / gameLoop.GameTime.DeltaTime;
-            string fpsStr = fps.ToString("0.00");
+            string totalTimeElapsedStr = (Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() / 60, 0) + 
+                                         "m:" +
+                                         Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds(), 0) +
+                                         "s")
+                                         .ToString();
+            string deltaTimeStr =        (Math.Round(Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsSeconds() / 60, 0) +
+                                         "m:" +
+                                         Math.Round(Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsSeconds(), 0) +
+                                         "s" +
+                                         Math.Round((float)Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsMilliseconds() % 100, 0) +
+                                         "mls")
+                                         .ToString();
+            string fpsStr = (1f / gameLoop.GameTime.DeltaTime).ToString("0.00");
 
             Text text = new Text("Time Elapsed : " + totalTimeElapsedStr, consoleFont, 14);
             text.Position = new Vector2f(4f, 8f);

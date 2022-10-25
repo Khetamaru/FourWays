@@ -20,6 +20,8 @@ namespace FourWays.Game
         private const uint CAR_NUMBER_LIMIT = 8;
         internal uint DEATH_COUNTER = 0;
 
+        private const bool TEST_ON = false;
+
         private List<RectangleShape> roadBounds;
 
         private Dictionary<Direction, List<Car>> cars;
@@ -33,9 +35,9 @@ namespace FourWays.Game
         {
             Arial = new Font("./fonts/arial.ttf");
 
-            CarFactory = new CarFactory(CollideTest, Arial);
+            CarFactory = new CarFactory(CollideTest, Arial, ExternalDraw, TEST_ON);
             RoadBoundFactory = new RoadBoundFactory();
-            RoadLightFactory = new RoadLightFactory();
+            RoadLightFactory = new RoadLightFactory(ExternalDraw, TEST_ON);
         }
 
         internal override void LoadContent()
@@ -94,10 +96,10 @@ namespace FourWays.Game
 
             roadLights.TryGetValue(Direction.left, out RoadLight temp);
 
-            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
-            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
-            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
-            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDraw, null, Arial, TEST_ON));
+            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDraw, null, Arial, TEST_ON));
+            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDraw, null, Arial, TEST_ON));
+            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDraw, null, Arial, TEST_ON));
 
             foreach (Car car in TestList)
             {
@@ -250,6 +252,13 @@ namespace FourWays.Game
                 Window.Draw(roadLight.Value.Image);
                 Window.Draw(roadLight.Value.StopLine);
             }
+        }
+
+        internal void ExternalDraw(RectangleShape rectangleShape)
+        {
+            Window.Draw(rectangleShape);
+
+            Window.Display();
         }
 
         private List<Car> CollideTest(Car carTest)

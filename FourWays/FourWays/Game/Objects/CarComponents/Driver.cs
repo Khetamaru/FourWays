@@ -119,7 +119,20 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             return carTemp;
         }
 
-        private double GetDistance(RectangleShape shape) { return Math.Sqrt(Math.Pow(shape.Position.Y - Parent.Shape.Position.Y, 2) + Math.Pow(shape.Position.Y - Parent.Shape.Position.Y, 2)); }
+        private double GetDistance(RectangleShape shape)
+        {
+            RectangleShape targetRealShape = new RectangleShape();
+            targetRealShape.Position.X = shape.Position.X + (shape.Size.X / 2)
+            RectangleShape realShape = new RectangleShape();
+            return Parent.direction switch
+            {
+                Direction.up => shape.Position.Y - Parent.Shape.Position.Y,
+                Direction.down => shape.Position.Y - Parent.Shape.Position.Y + Parent.Shape.Size.Y,
+                Direction.left => shape.Position.X - Parent.Shape.Position.X,
+                Direction.right => shape.Position.X - Parent.Shape.Position.X + Parent.Shape.Size.X,
+                _ => throw new NotImplementedException()
+            };
+        }
 
         private void ChooseAnAction((GameObject, Car) target)
         {
@@ -178,7 +191,15 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
 
         private double GetSlowStrengthStopLine(RoadLight roadLight)
         {
-            return 1 / GetDistance(roadLight.StopLine) * AccuracyPourcentageStackValue;
+            double distance = Math.Abs(GetDistance(roadLight.StopLine));
+            double speed = Parent.Engine.RotationSpeed / 3600 * 50000;
+            double slowDownDistance = Math.Round(speed / 10, 0) * Math.Round(speed / 10, 0);
+
+            if (distance < slowDownDistance)
+            {
+                return speed - Math.Round(Math.Sqrt(distance) * 10, 0);
+            }
+            return 0;
         }
 
         private void AffectStatus(GameObject target)
@@ -224,11 +245,6 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
 
             return (float)((targetSpeed * AccuracyPourcentageStackValue) +
                            (distance * AccuracyPourcentageStackValue));
-        }
-
-        public enum DriverAction
-        {
-
         }
     }
 }

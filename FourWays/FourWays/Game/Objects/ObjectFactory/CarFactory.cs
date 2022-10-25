@@ -18,10 +18,15 @@ namespace FourWays.Game.Objects.ObjectFactory
         internal Texture CarTextureUp { get; private set; }
         internal Texture CarTextureDown { get; private set; }
 
-        public CarFactory(Func<Car, List<Car>> collideTest, Font arial)
+        private Action<RectangleShape> ExternalDrawFunction;
+        private bool BreakPointHighlightTrigger;
+
+        public CarFactory(Func<Car, List<Car>> collideTest, Font arial, Action<RectangleShape> ExternalDrawFunction, bool BreakPointHighlightTrigger)
         {
             Arial = arial;
             CollideTest = collideTest;
+            this.ExternalDrawFunction = ExternalDrawFunction;
+            this.BreakPointHighlightTrigger = BreakPointHighlightTrigger;
 
             LoadContent();
         }
@@ -79,7 +84,7 @@ namespace FourWays.Game.Objects.ObjectFactory
                         break;
                 }
                 roadLights.TryGetValue(Direction.left, out temp);
-                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, texture, Arial);
+                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDrawFunction, texture, Arial, BreakPointHighlightTrigger);
             }
             while (CollideTest(car).Count > 0);
 
@@ -105,7 +110,7 @@ namespace FourWays.Game.Objects.ObjectFactory
                     texture = CarTextureDown;
                     break;
             }
-            return new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, texture, Arial);
+            return new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDrawFunction, texture, Arial, BreakPointHighlightTrigger);
         }
     }
 }

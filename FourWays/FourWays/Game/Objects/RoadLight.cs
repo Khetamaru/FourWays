@@ -25,6 +25,9 @@ namespace FourWays.Game.Objects
         internal const string ORANGE_LIGHT_PATH = "./Ressources/traffic-lights-orange.png";
         internal const string RED_LIGHT_PATH = "./Ressources/traffic-lights-red.png";
 
+        private Action<RectangleShape> ExternalDrawFunction;
+        private bool BreakPointHighlightTrigger;
+
         private Texture RoadLightGreen;
         private Texture RoadLightOrange;
         private Texture RoadLightRed;
@@ -49,10 +52,12 @@ namespace FourWays.Game.Objects
 
         internal RectangleShape StopLine;
 
-        public RoadLight(Vector2f position, Direction direction, RectangleShape StopLine, RoadLightState startLight) 
+        public RoadLight(Vector2f position, Direction direction, RectangleShape StopLine, RoadLightState startLight, Action<RectangleShape> externalDrawFunction, bool breakPointHighlightTrigger)
         {
             LoadContent();
             Initialize(position, direction, StopLine, startLight);
+            ExternalDrawFunction = externalDrawFunction;
+            BreakPointHighlightTrigger = breakPointHighlightTrigger;
         }
 
         internal void LoadContent()
@@ -90,6 +95,8 @@ namespace FourWays.Game.Objects
 
         internal override void Update()
         {
+            BreakPointHighlight(true);
+
             if (RoadLightLeft.state != RoadLightState.Green && 
                 state == RoadLightState.Red/* || 
                 state != RoadLightState.Red*/)
@@ -124,6 +131,7 @@ namespace FourWays.Game.Objects
             {
                 totalTimeBeforeUpdate = 0f;
             }
+            BreakPointHighlight(false);
         }
 
         private void ApplyTexture(RoadLightState state)
@@ -151,6 +159,29 @@ namespace FourWays.Game.Objects
         internal void AssignRoadLightLeft(RoadLight roadLight)
         {
             RoadLightLeft = roadLight;
+        }
+
+        internal override void BreakPointHighlight(bool switchTrigger)
+        {
+            if (BreakPointHighlightTrigger)
+            {
+                if (switchTrigger)
+                {
+                    RectangleShape shape = new RectangleShape();
+                    shape.Size = Image.Size;
+                    shape.Position = Image.Position;
+                    shape.FillColor = Color.White;
+                    ExternalDrawFunction.Invoke(shape);
+                }
+                else
+                {
+                    RectangleShape shape = new RectangleShape();
+                    shape.Size = Image.Size;
+                    shape.Position = Image.Position;
+                    shape.FillColor = Color.Blue;
+                    ExternalDrawFunction.Invoke(shape);
+                }
+            }
         }
     }
 
