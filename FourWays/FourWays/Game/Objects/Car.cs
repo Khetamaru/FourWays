@@ -14,7 +14,6 @@ namespace FourWays.Game.Objects
         private uint WindowWidth;
         private uint WindowHeight;
 
-        internal const float SecurityDistance = 15f;
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
 
@@ -48,7 +47,7 @@ namespace FourWays.Game.Objects
         internal Vector2f move;
 
         internal Engine Engine;
-        private Driver Driver;
+        internal Driver Driver;
 
         public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Action<RectangleShape> ExternalDrawFunction, Texture texture, Font arial, bool BreakPointHighlightTrigger)
         {
@@ -100,6 +99,8 @@ namespace FourWays.Game.Objects
                 _ => throw new NotImplementedException()
             };
         }
+
+        internal float SecurityDistance => (int)Engine.BoxSpeed > 0 ? CarSideSize * (int)Engine.BoxSpeed : CarSideSize;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,32 +156,12 @@ namespace FourWays.Game.Objects
             Engine.DowngradeCore();
         }
 
-        internal List<Car> LookForward()
+        internal List<Car> LookCars(bool front)
         {
             float multiplier = (float)Engine.RotationSpeed * 2;
 
-            float distanceX = (move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * move.X;
-            float distanceY = (move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * move.Y;
-
-            float recenterX = multiplier / 2 * Math.Abs(move.Y);
-            float recenterY = multiplier / 2 * Math.Abs(move.X);
-
-            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X * multiplier, Shape.Size.Y * multiplier));
-
-            shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
-
-            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, ExternalDrawFunction, Texture, Arial, BreakPointHighlightTrigger);
-            car.Guid = Guid;
-            car.Shape = shape;
-
-            return CollideTest.Invoke(car);
-        }
-        internal List<Car> LookBack()
-        {
-            float multiplier = (float)Engine.RotationSpeed * 2;
-
-            float distanceX = (- move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * - move.X;
-            float distanceY = (- move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * - move.Y;
+            float distanceX = front ? (move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * move.X : (-move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * -move.X;
+            float distanceY = front ? (move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * move.Y : (-move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * -move.Y;
 
             float recenterX = multiplier / 2 * Math.Abs(move.Y);
             float recenterY = multiplier / 2 * Math.Abs(move.X);

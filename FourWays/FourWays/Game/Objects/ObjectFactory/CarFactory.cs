@@ -10,8 +10,9 @@ namespace FourWays.Game.Objects.ObjectFactory
 
         private const uint DEFAULT_WINDOW_WIDTH = 1280;
         private const uint DEFAULT_WINDOW_HEIGHT = 960;
-
+        
         Func<Car, List<Car>> CollideTest { get; }
+        Func<Car, List<Car>> CollideTestSecurity { get; }
 
         internal Texture CarTextureRight { get; private set; }
         internal Texture CarTextureLeft { get; private set; }
@@ -21,12 +22,13 @@ namespace FourWays.Game.Objects.ObjectFactory
         private Action<RectangleShape> ExternalDrawFunction;
         private bool BreakPointHighlightTrigger;
 
-        public CarFactory(Func<Car, List<Car>> collideTest, Font arial, Action<RectangleShape> ExternalDrawFunction, bool BreakPointHighlightTrigger)
+        public CarFactory(Func<Car, List<Car>> collideTest, Func<Car, List<Car>> collideTestSecurity, Font arial, Action<RectangleShape> ExternalDrawFunction, bool BreakPointHighlightTrigger)
         {
             Arial = arial;
             CollideTest = collideTest;
             this.ExternalDrawFunction = ExternalDrawFunction;
             this.BreakPointHighlightTrigger = BreakPointHighlightTrigger;
+            this.CollideTestSecurity = collideTestSecurity;
 
             LoadContent();
         }
@@ -86,7 +88,7 @@ namespace FourWays.Game.Objects.ObjectFactory
                 roadLights.TryGetValue(Direction.left, out temp);
                 car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDrawFunction, texture, Arial, BreakPointHighlightTrigger);
             }
-            while (CollideTest(car).Count > 0);
+            while (CollideTestSecurity(car).Count > 0);
 
             return PopACar(roadLights, direction);
         }

@@ -17,7 +17,7 @@ namespace FourWays.Game
 
         private const string WINDOW_TITLE = "Four Ways";
 
-        private const uint CAR_NUMBER_LIMIT = 8;
+        private const uint CAR_NUMBER_LIMIT = 6;
         internal uint DEATH_COUNTER = 0;
 
         private const bool TEST_ON = false;
@@ -35,7 +35,7 @@ namespace FourWays.Game
         {
             Arial = new Font("./fonts/arial.ttf");
 
-            CarFactory = new CarFactory(CollideTest, Arial, ExternalDraw, TEST_ON);
+            CarFactory = new CarFactory(CollideTest, CollideTestSecurity, Arial, ExternalDraw, TEST_ON);
             RoadBoundFactory = new RoadBoundFactory();
             RoadLightFactory = new RoadLightFactory(ExternalDraw, TEST_ON);
         }
@@ -270,6 +270,23 @@ namespace FourWays.Game
                 foreach (Car car in carList.Value)
                 {
                     if (car.isColliding(carTest))
+                    {
+                        carsSeen.Add(car);
+                    }
+                }
+            }
+            return carsSeen;
+        }
+
+        private List<Car> CollideTestSecurity(Car carTest)
+        {
+            List<Car> carsSeen = new List<Car>();
+
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
+            {
+                foreach (Car car in carList.Value)
+                {
+                    if (car.isColliding(carTest) && carTest.Driver.GetDistance(car.Shape) <= 2 * carTest.SecurityDistance)
                     {
                         carsSeen.Add(car);
                     }

@@ -26,10 +26,10 @@ namespace FourWays.Game.Objects.ObjectFactory
         {
             Dictionary<Direction, RoadLight> roadLights = new Dictionary<Direction, RoadLight>();
 
-            roadLights.Add(Direction.right, RoadLightCreation(true, Direction.right, GROUND_WIDTH - 10f,  GROUND_HEIGHT + 105f, GROUND_WIDTH,        GROUND_HEIGHT + 55f));
-            roadLights.Add(Direction.down, RoadLightCreation(false, Direction.down,  GROUND_WIDTH - 60f,  GROUND_HEIGHT - 80f,  GROUND_WIDTH + 5f,   GROUND_HEIGHT));
-            roadLights.Add(Direction.up, RoadLightCreation(  false, Direction.up,    GROUND_WIDTH + 110f, GROUND_HEIGHT + 105f, GROUND_WIDTH + 55f,  GROUND_HEIGHT + +100f));
-            roadLights.Add(Direction.left, RoadLightCreation( true, Direction.left,  GROUND_WIDTH + 110f, GROUND_HEIGHT - 10f,  GROUND_WIDTH + 100f, GROUND_HEIGHT + 5f));
+            roadLights.Add(Direction.right, RoadLightCreation(true, Direction.right, GROUND_WIDTH - 10f,  GROUND_HEIGHT + 105f, GROUND_WIDTH,        GROUND_HEIGHT + 65f));
+            roadLights.Add(Direction.down, RoadLightCreation(false, Direction.down,  GROUND_WIDTH - 60f,  GROUND_HEIGHT - 80f,  GROUND_WIDTH + 15f,   GROUND_HEIGHT));
+            roadLights.Add(Direction.up, RoadLightCreation(  false, Direction.up,    GROUND_WIDTH + 110f, GROUND_HEIGHT + 105f, GROUND_WIDTH + 65f,  GROUND_HEIGHT + +100f));
+            roadLights.Add(Direction.left, RoadLightCreation( true, Direction.left,  GROUND_WIDTH + 110f, GROUND_HEIGHT - 10f,  GROUND_WIDTH + 100f, GROUND_HEIGHT + 15f));
 
             RoadLightAlignement(roadLights);
 
@@ -42,8 +42,8 @@ namespace FourWays.Game.Objects.ObjectFactory
             float y;
             RoadLightState roadLightState;
 
-            if (horizontal) { x = 2f; y = 40f; roadLightState = RoadLightState.Green; }
-            else {            x = 40f; y = 2f; roadLightState = RoadLightState.Red; }
+            if (horizontal) { x = 2f; y = 20f; roadLightState = RoadLightState.Green; }
+            else {            x = 20f; y = 2f; roadLightState = RoadLightState.Red; }
 
             RectangleShape StopArea = new RectangleShape(new Vector2f(x, y));
 

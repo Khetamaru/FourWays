@@ -49,12 +49,12 @@ namespace FourWays.Game
         {
             string totalTimeElapsedStr = (Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() / 60, 0) + 
                                          "m:" +
-                                         Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds(), 0) +
+                                         Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() % 60, 0) +
                                          "s")
                                          .ToString();
             string deltaTimeStr =        (Math.Round(Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsSeconds() / 60, 0) +
                                          "m:" +
-                                         Math.Round(Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsSeconds(), 0) +
+                                         Math.Round(Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsSeconds() % 60, 0) +
                                          "s" +
                                          Math.Round((float)Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsMilliseconds() % 100, 0) +
                                          "mls")

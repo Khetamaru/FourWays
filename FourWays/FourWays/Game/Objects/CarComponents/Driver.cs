@@ -24,8 +24,8 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
         private (GameObject, Car) GetInfos()
         {
             RoadLight closestRoadLight = Parent.LookAtRoadLights();
-            Car closestCar = AnalyseCarsSeen(Parent.LookForward());
-            Car closestCarBack = AnalyseCarsSeenBack(Parent.LookBack());
+            Car closestCar = AnalyseCarsSeen(Parent.LookCars(true));
+            Car closestCarBack = AnalyseCarsSeenBack(Parent.LookCars(false));
 
             return (ClosestObstacle(closestRoadLight, closestCar), closestCarBack);
         }
@@ -119,20 +119,21 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             return carTemp;
         }
 
-        private double GetDistance(RectangleShape shape)
+        internal double GetDistance(RectangleShape shape)
         {
-            RectangleShape targetRealShape = new RectangleShape();
-            targetRealShape.Position.X = shape.Position.X + (shape.Size.X / 2)
-            RectangleShape realShape = new RectangleShape();
-            return Parent.direction switch
-            {
-                Direction.up => shape.Position.Y - Parent.Shape.Position.Y,
-                Direction.down => shape.Position.Y - Parent.Shape.Position.Y + Parent.Shape.Size.Y,
-                Direction.left => shape.Position.X - Parent.Shape.Position.X,
-                Direction.right => shape.Position.X - Parent.Shape.Position.X + Parent.Shape.Size.X,
-                _ => throw new NotImplementedException()
-            };
+            float X1 = shape.Position.X + (shape.Size.X / 2);
+            float Y1 = shape.Position.Y + (shape.Size.Y / 2);
+
+            float X2 = Parent.Shape.Position.X + (Parent.Shape.Size.X / 2);
+            float Y2 = Parent.Shape.Position.Y + (Parent.Shape.Size.Y / 2);
+
+
+            return DistanceCalcul(X1, X2, Y1, Y2)
+                 - DistanceCalcul(X1, shape.Position.X, Y1, shape.Position.Y)
+                 - DistanceCalcul(X2, Parent.Shape.Position.X, Y2, Parent.Shape.Position.Y);
         }
+
+        private double DistanceCalcul(float X1, float X2, float Y1, float Y2) => Math.Sqrt(Math.Pow(Y2 - Y1, 2) + Math.Pow(X2 - X1, 2));
 
         private void ChooseAnAction((GameObject, Car) target)
         {
@@ -150,54 +151,35 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
 
                 case CarState.Decelerate:
 
-                    if (target.Item1 as Car != null)
-                    {
-
-                        if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
-                        Parent.SlowDown(AnalyseClosestCar(target.Item1 as Car));
-                    }
-                    else if (target.Item1 as RoadLight != null)
-                    {
-                        if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
-                        Parent.SlowDown(GetSlowStrengthStopLine(target.Item1 as RoadLight));
-                    }
+                    if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
+                    if (target.Item1 as Car != null) Parent.SlowDown(GetSlowStrengthCar(target.Item1 as Car));
+                    else if (target.Item1 as RoadLight != null) Parent.SlowDown(GetSlowStrengthStopLine(target.Item1 as RoadLight));
                     else { throw new ArgumentNullException(); }
                     break;
 
                 case CarState.BackForward:
 
-                    List<Car> list = Parent.LookBack();
-                    if (list.Count > 0) Parent.MoveBack(AnalyseClosestCarBack(target.Item2));
-                    else
-                    {
-                        if (target.Item1 as Car != null)
-                        {
-
-                            if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
-                            Parent.SlowDown(AnalyseClosestCar(target.Item1 as Car));
-                        }
-                        else if (target.Item1 as RoadLight != null)
-                        {
-                            if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
-                            Parent.SlowDown(GetSlowStrengthStopLine(target.Item1 as RoadLight));
-                        }
-                        else { throw new ArgumentNullException(); }
-                    }
+                    if (target.Item2 != null) Parent.MoveBack(AnalyseClosestCarBack(target.Item2));
+                    else Parent.MoveBack(AccuracyPourcentageStackValue);
                     break;
             }
         }
 
         private static double SpeedBoost(double speed) => speed * 2;
 
-        private double GetSlowStrengthStopLine(RoadLight roadLight)
+        private double GetSlowStrengthCar(Car car) => GetSlowStrength(Math.Abs(GetDistance(car.Shape)));
+
+        private double GetSlowStrengthStopLine(RoadLight roadLight) => GetSlowStrength(Math.Abs(GetDistance(roadLight.StopLine)));
+
+        private double GetSlowStrength(double distance)
         {
-            double distance = Math.Abs(GetDistance(roadLight.StopLine));
+            float divider = 5;
             double speed = Parent.Engine.RotationSpeed / 3600 * 50000;
-            double slowDownDistance = Math.Round(speed / 10, 0) * Math.Round(speed / 10, 0);
+            double slowDownDistance = Math.Round(speed / 10, 0) * Math.Round(speed / 10, 0) * divider;
 
             if (distance < slowDownDistance)
             {
-                return speed - Math.Round(Math.Sqrt(distance) * 10, 0);
+                return Math.Abs(speed - Math.Round(Math.Sqrt(distance / divider) * 10, 0));
             }
             return 0;
         }
@@ -208,7 +190,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             {
                 Parent.status = CarState.Go;
             }
-            else if ((target as Car) != null && GetDistance((target as Car).Shape) < Car.SecurityDistance)
+            else if ((target as Car) != null && GetDistance((target as Car).Shape) < Parent.SecurityDistance)
             {
                 Parent.status = CarState.BackForward;
             }
@@ -216,26 +198,6 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             {
                 Parent.status = CarState.Decelerate;
             }
-        }
-
-        private float AnalyseClosestCar(Car target)
-        {
-            double distance = 1 / GetDistance(target.Shape);
-            double targetSpeed = target.Engine.RotationSpeed;
-            double targetState = 0;
-
-            switch (target.status)
-            {
-                case CarState.Go:
-                    targetState = 2;
-                    break;
-                case CarState.Decelerate:
-                    targetState = 1;
-                    break;
-            }
-            return (float)((targetSpeed * AccuracyPourcentageStackValue) + 
-                           (distance * AccuracyPourcentageStackValue) + 
-                           (targetState * AccuracyPourcentageStackValue));
         }
 
         private double AnalyseClosestCarBack(Car target)
