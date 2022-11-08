@@ -62,14 +62,12 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
         private List<Car> FeedTrashList(List<Car> cars)
         {
             List<Car> trashList = new List<Car>();
-            Vector2f orientationValue;
 
             foreach(Car car in cars)
             {
-                orientationValue = Parent.move + car.move;
                 if (Parent.direction == Direction.left || Parent.direction == Direction.right)
                 {
-                    switch (Math.Abs(orientationValue.X))
+                    switch (Math.Abs((Parent.move + car.move).X))
                     {
                         case 0: trashList.Add(car); break;
                         case 1:
@@ -80,12 +78,12 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                             }
                             else if (car.Shape.Position.Y + car.Shape.Size.Y < Parent.Shape.Position.Y) trashList.Add(car);
                             break;
-                        case 2: if (Parent.Engine.RotationSpeed <= car.Engine.RotationSpeed) trashList.Add(car); break;
+                        case 2: if (Parent.Engine.RotationSpeed <= car.Engine.RotationSpeed && GetDistance(car.Shape) > Parent.SecurityDistance) trashList.Add(car); break;
                     }
                 }
                 else
                 {
-                    switch (Math.Abs(orientationValue.Y))
+                    switch (Math.Abs((Parent.move + car.move).Y))
                     {
                         case 0: trashList.Add(car); break;
                         case 1:
@@ -96,7 +94,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                             }
                             else if (car.Shape.Position.X + car.Shape.Size.X < Parent.Shape.Position.X) trashList.Add(car);
                             break;
-                        case 2: if (Parent.Engine.RotationSpeed <= car.Engine.RotationSpeed) trashList.Add(car); break;
+                        case 2: if (Parent.Engine.RotationSpeed <= car.Engine.RotationSpeed && GetDistance(car.Shape) > Parent.SecurityDistance) trashList.Add(car); break;
                     }
                 }
             }
@@ -133,7 +131,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                  - DistanceCalcul(X2, Parent.Shape.Position.X, Y2, Parent.Shape.Position.Y);
         }
 
-        private double DistanceCalcul(float X1, float X2, float Y1, float Y2) => Math.Sqrt(Math.Pow(Y2 - Y1, 2) + Math.Pow(X2 - X1, 2));
+        private double DistanceCalcul(float X1, float X2, float Y1, float Y2) => Math.Abs(Math.Sqrt(Math.Pow(Y2 - Y1, 2) + Math.Pow(X2 - X1, 2)));
 
         private void ChooseAnAction((GameObject, Car) target)
         {
@@ -143,9 +141,8 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             {
                 case CarState.Go:
 
-                    if (Parent.Engine.UpgradeTest()) Parent.UpgradeCore();
-                    if (Parent.Engine.BoxSpeed == Engine.Speed.One) Parent.MoveForward(SpeedBoost(AccuracyPourcentageStackValue / 5));
-                    else Parent.MoveForward(AccuracyPourcentageStackValue / 5);
+                    if (Parent.Engine.UpgradeTest() && Parent.Engine.BoxSpeed != Engine.Speed.Five) Parent.UpgradeCore();
+                    else Parent.MoveForward();
                     
                     break;
 
@@ -205,8 +202,8 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             double distance = GetDistance(target.Shape);
             double targetSpeed = 1 / target.Engine.RotationSpeed;
 
-            return (float)((targetSpeed * AccuracyPourcentageStackValue) +
-                           (distance * AccuracyPourcentageStackValue));
+            return (float)Math.Abs((targetSpeed * AccuracyPourcentageStackValue) +
+                                   (distance * AccuracyPourcentageStackValue));
         }
     }
 }

@@ -1,16 +1,12 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FourWays.Game.Objects
 {
     public class RoadLight : GameObject
     {
-        internal const float TIME_UNTIL_UPDATE = 2f;
+        internal const float TIME_UNTIL_UPDATE = 3f;
 
         float totalTimeBeforeUpdate = 0f;
         float previousTimeElapsed = 0f;
@@ -95,19 +91,17 @@ namespace FourWays.Game.Objects
 
         internal override void Update()
         {
-            BreakPointHighlight(true);
-
-            if (RoadLightLeft.state != RoadLightState.Green && 
-                state == RoadLightState.Red/* || 
-                state != RoadLightState.Red*/)
+            if (RoadLightLeft.state == RoadLightState.Red || 
+                state != RoadLightState.Red)
             {
                 totalTimeElapsed = clock.ElapsedTime.AsSeconds();
                 deltaTime = totalTimeElapsed - previousTimeElapsed;
                 previousTimeElapsed = totalTimeElapsed;
 
                 totalTimeBeforeUpdate += deltaTime;
+                float TEMP_TIME = state == RoadLightState.Green ? TIME_UNTIL_UPDATE * 2 : TIME_UNTIL_UPDATE;
 
-                if (totalTimeBeforeUpdate >= TIME_UNTIL_UPDATE)
+                if (totalTimeBeforeUpdate >= TEMP_TIME)
                 {
                     totalTimeBeforeUpdate = 0f;
 
@@ -131,7 +125,6 @@ namespace FourWays.Game.Objects
             {
                 totalTimeBeforeUpdate = 0f;
             }
-            BreakPointHighlight(false);
         }
 
         private void ApplyTexture(RoadLightState state)
@@ -159,29 +152,6 @@ namespace FourWays.Game.Objects
         internal void AssignRoadLightLeft(RoadLight roadLight)
         {
             RoadLightLeft = roadLight;
-        }
-
-        internal override void BreakPointHighlight(bool switchTrigger)
-        {
-            if (BreakPointHighlightTrigger)
-            {
-                if (switchTrigger)
-                {
-                    RectangleShape shape = new RectangleShape();
-                    shape.Size = Image.Size;
-                    shape.Position = Image.Position;
-                    shape.FillColor = Color.White;
-                    ExternalDrawFunction.Invoke(shape);
-                }
-                else
-                {
-                    RectangleShape shape = new RectangleShape();
-                    shape.Size = Image.Size;
-                    shape.Position = Image.Position;
-                    shape.FillColor = Color.Blue;
-                    ExternalDrawFunction.Invoke(shape);
-                }
-            }
         }
     }
 

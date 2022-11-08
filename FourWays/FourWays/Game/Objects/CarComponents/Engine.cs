@@ -61,7 +61,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             if (DownSpeedTest())
             {
                 SlowDownRotationSpeed(moveStrength);
-                if (RotationSpeed < 0.02 && RotationSpeed > 0) RotationSpeed = 0f;
+                if (Math.Round(RotationSpeed / 3600 * 50000, 1) < 5 && RotationSpeed > 0) RotationSpeed = 0f;
                 return true;
             }
             return false;
@@ -119,11 +119,11 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             }
         }
 
-        internal bool SpeedUp(double moveStrength)
+        internal bool SpeedUp()
         {
             if (UpSpeedTest())
             {
-                SpeedUpRotationSpeed(moveStrength);
+                SpeedUpRotationSpeed();
                 return true;
             }
             return false;
@@ -148,8 +148,10 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             return !UpgradeTest();
         }
 
-        private void SpeedUpRotationSpeed(double moveStrength)
+        private void SpeedUpRotationSpeed()
         {
+            double moveStrength = (double)BoxSpeed / 150;
+
             RotationSpeed = BoxSpeed switch
             {
                 Speed.One => (RotationSpeed + moveStrength >= 2) ? 2.0000 : RotationSpeed + Math.Round(moveStrength, 4),

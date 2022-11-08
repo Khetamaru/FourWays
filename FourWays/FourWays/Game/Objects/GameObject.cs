@@ -13,7 +13,5 @@ namespace FourWays.Game.Objects
         }
 
         internal abstract void Update();
-
-        internal abstract void BreakPointHighlight(bool switchTrigger);
     }
 }

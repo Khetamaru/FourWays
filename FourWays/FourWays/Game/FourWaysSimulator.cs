@@ -17,10 +17,13 @@ namespace FourWays.Game
 
         private const string WINDOW_TITLE = "Four Ways";
 
-        private const uint CAR_NUMBER_LIMIT = 6;
+        private const uint CAR_NUMBER_LIMIT = 16;
         internal uint DEATH_COUNTER = 0;
 
         private const bool TEST_ON = false;
+
+        private const bool RENDER_SPEED = false;
+        private const bool RENDER_STOP_LINE = false;
 
         private List<RectangleShape> roadBounds;
 
@@ -103,7 +106,7 @@ namespace FourWays.Game
 
             foreach (Car car in TestList)
             {
-                if (!CollisionTest(car))
+                if (CollideTestSecurity(car).Count == 0)
                 {
                     return true;
                 }
@@ -151,21 +154,6 @@ namespace FourWays.Game
                 }
             }
             return trashList;
-        }
-
-        private bool CollisionTest(Car car)
-        {
-            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
-            {
-                foreach (Car car2 in carList.Value)
-                {
-                    if (car.isColliding(car2))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
         }
 
         private void OutOfBoundsTest(List<Car> trashList)
@@ -239,8 +227,11 @@ namespace FourWays.Game
                 {
                     Window.Draw(car.Shape);
 
-                    car.Engine.speedText.Position = new Vector2f(car.Shape.Position.X + 10f, car.Shape.Position.Y + 10f);
-                    Window.Draw(car.Engine.speedText);
+                    if (RENDER_SPEED)
+                    {
+                        car.Engine.speedText.Position = new Vector2f(car.Shape.Position.X + 10f, car.Shape.Position.Y + 10f);
+                        Window.Draw(car.Engine.speedText);
+                    }
                 }
             }
         }
@@ -250,7 +241,7 @@ namespace FourWays.Game
             foreach (KeyValuePair<Direction, RoadLight> roadLight in roadLights)
             {
                 Window.Draw(roadLight.Value.Image);
-                Window.Draw(roadLight.Value.StopLine);
+                if (RENDER_STOP_LINE) Window.Draw(roadLight.Value.StopLine);
             }
         }
 
@@ -286,7 +277,7 @@ namespace FourWays.Game
             {
                 foreach (Car car in carList.Value)
                 {
-                    if (car.isColliding(carTest) && carTest.Driver.GetDistance(car.Shape) <= 2 * carTest.SecurityDistance)
+                    if (car.isColliding(carTest) || carTest.Driver.GetDistance(car.Shape) <= carTest.SecurityDistance)
                     {
                         carsSeen.Add(car);
                     }

@@ -107,9 +107,7 @@ namespace FourWays.Game.Objects
 
         internal override void Update()
         {
-            BreakPointHighlight(true);
             Driver.Update();
-            BreakPointHighlight(false);
         }
 
         private void Move()
@@ -117,9 +115,9 @@ namespace FourWays.Game.Objects
             Shape.Position = new Vector2f((float)(Shape.Position.X + move.X * Engine.RotationSpeed), (float)(Shape.Position.Y + move.Y * Engine.RotationSpeed));
         }
 
-        internal void MoveForward(double moveStrength)
+        internal void MoveForward()
         {
-            SpeedUp(moveStrength);
+            SpeedUp();
             Move();
         }
 
@@ -129,9 +127,9 @@ namespace FourWays.Game.Objects
 
             SlowDown(moveStrength);
         }
-        private void SpeedUp(double moveStrength)
+        private void SpeedUp()
         {
-            Engine.SpeedUp(moveStrength);
+            Engine.SpeedUp();
         }
 
         internal void SlowDown(double moveStrength)
@@ -203,7 +201,7 @@ namespace FourWays.Game.Objects
 
         internal RoadLight LookAtRoadLights()
         {
-            return isBeforeTheStopLine() && RoadLight.state == RoadLightState.Red ? RoadLight : null;
+            return (isBeforeTheStopLine() && (RoadLight.state == RoadLightState.Red || RoadLight.state == RoadLightState.Orange)) ? RoadLight : null;
         }
 
         internal bool isOutOfBounds()
@@ -231,29 +229,6 @@ namespace FourWays.Game.Objects
                 Direction.down => RoadLight.StopLine.Position.Y > Shape.Position.Y,
                 _ => false
             };
-        }
-
-        internal override void BreakPointHighlight(bool switchTrigger)
-        {
-            if(BreakPointHighlightTrigger)
-            {
-                if(switchTrigger)
-                {
-                    RectangleShape shape = new RectangleShape();
-                    shape.Size = Shape.Size;
-                    shape.Position = Shape.Position;
-                    shape.FillColor = Color.White;
-                    ExternalDrawFunction.Invoke(shape);
-                }
-                else
-                {
-                    RectangleShape shape = new RectangleShape();
-                    shape.Size = Shape.Size;
-                    shape.Position = Shape.Position;
-                    shape.FillColor = Color.Blue;
-                    ExternalDrawFunction.Invoke(shape);
-                }
-            }
         }
     }
 
