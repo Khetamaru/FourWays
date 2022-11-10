@@ -1,18 +1,17 @@
-﻿using System;
+﻿using SFML.Graphics;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FourWays.Game.Objects
 {
     public abstract class GameObject
     {
+        private Action<RectangleShape> ExternalDrawFunction;
         protected GameObject()
         {
 
         }
 
-        public abstract void Update();
+        internal abstract void Update();
     }
 }

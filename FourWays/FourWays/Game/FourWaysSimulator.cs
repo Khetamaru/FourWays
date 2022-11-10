@@ -1,246 +1,134 @@
-﻿using SFML.Graphics;
-using SFML.System;
+﻿using FourWays.Game.Objects;
+using FourWays.Game.Objects.ObjectFactory;
 using FourWays.Loop;
-using System.Collections.Generic;
-using FourWays.Game.Objects;
+using SFML.Graphics;
+using SFML.System;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 
 namespace FourWays.Game
 {
     public class FourWaysSimulator : GameLoop
     {
+        private Font Arial;
+
         private const uint DEFAULT_WINDOW_WIDTH = 1280;
         private const uint DEFAULT_WINDOW_HEIGHT = 960;
 
-        private const uint CAR_NUMBER_LIMIT = 6;
         private const string WINDOW_TITLE = "Four Ways";
 
-        public uint DEATH_COUNTER = 0;
+        private const uint CAR_NUMBER_LIMIT = 8;
+        internal uint DEATH_COUNTER = 0;
 
-        private List<Car> rightRoadCars;
-        private List<Car> leftRoadCars;
-        private List<Car> upRoadCars;
-        private List<Car> downRoadCars;
+        private const bool TEST_ON = false;
+
+        private bool RENDER_SPEED;
+        private bool RENDER_OBJECTIVE;
+        private bool RENDER_STOP_LINE;
+        private bool RENDER_TURNING_ZONE;
 
         private List<RectangleShape> roadBounds;
-        private Dictionary<Car.Direction, RoadLight> roadLights;
 
-        private Texture OutRoadTexture { get; set; }
-        private Texture RoadCenterTexture { get; set; }
-        private Texture RoadHorizontalTexture { get; set; }
-        private Texture RoadVerticalTexture { get; set; }
-        public Texture CarTextureRight { get; private set; }
-        public Texture CarTextureLeft { get; private set; }
-        public Texture CarTextureUp { get; private set; }
-        public Texture CarTextureDown { get; private set; }
+        private Dictionary<Direction, List<Car>> cars;
+        private Dictionary<Direction, RoadLight> roadLights;
 
-        public FourWaysSimulator() : base(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, WINDOW_TITLE, Color.White) { }
+        private CarFactory CarFactory;
+        private RoadBoundFactory RoadBoundFactory;
+        private RoadLightFactory RoadLightFactory;
 
-        public override void LoadContent()
+        public FourWaysSimulator() : base(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, WINDOW_TITLE, Color.White)
+        {
+            Arial = new Font("./fonts/arial.ttf");
+
+            CarFactory = new CarFactory(CollideTest, CollideTestSecurity, Arial);
+            RoadBoundFactory = new RoadBoundFactory();
+            RoadLightFactory = new RoadLightFactory();
+
+            TestMode();
+        }
+
+        private void TestMode()
+        {
+            if (TEST_ON)
+            {
+                RENDER_SPEED = true;
+                RENDER_OBJECTIVE = false;
+                RENDER_STOP_LINE = true;
+                RENDER_TURNING_ZONE = true;
+            }
+            else
+            {
+                RENDER_SPEED = false;
+                RENDER_OBJECTIVE = true;
+                RENDER_STOP_LINE = false;
+                RENDER_TURNING_ZONE = false;
+            }
+        }
+
+        internal override void LoadContent()
         {
             DebugUtility.LoadContent();
-            LoadCarTextures();
-            RoadBoundLoadTextures();
+
+            CarFactory.LoadContent();
+            RoadBoundFactory.LoadContent();
         }
 
-        private void LoadCarTextures()
+        internal override void Initialize()
         {
-            CarTextureRight = new Texture(new Image("./Ressources/car_right.png"));
-            CarTextureLeft = new Texture(new Image("./Ressources/car_left.png"));
-            CarTextureUp = new Texture(new Image("./Ressources/car_up.png"));
-            CarTextureDown = new Texture(new Image("./Ressources/car_down.png"));
+            roadBounds = RoadBoundFactory.RoadBoundInit();
+            roadLights = RoadLightFactory.RoadLightInit();
+            cars = CarFactory.CarInit(roadLights);
         }
 
-        private void RoadBoundLoadTextures()
+        internal override void Update(GameTime gameTime)
         {
-            OutRoadTexture = new Texture(new Image("./Ressources/green-grass-texture_1249-15.jpg"));
-            RoadCenterTexture = new Texture(new Image("./Ressources/road_center.jpg"));
-            RoadHorizontalTexture = new Texture(new Image("./Ressources/road_horizontal.jpg"));
-            RoadVerticalTexture = new Texture(new Image("./Ressources/road_vertical.jpg"));
-        }
+            if (carsCount() < CAR_NUMBER_LIMIT && ASpawnIsEmpty())
+            {
+                var car = CarFactory.CarCreation(roadLights);
+                if (cars.TryGetValue(car.direction, out List<Car> temp)) temp.Add(car);
+            }
 
-        public override void Initialize()
-        {
-            CreateLayer();
-            CreateRoadLight();
-            CreateCars();
-        }
-
-        private void CreateLayer()
-        {
-            roadBounds = new List<RectangleShape>();
-
-            RectangleShape rectangleShape = new RectangleShape(new Vector2f(590f, 430f));
-            rectangleShape.Position = new Vector2f(0f, 0f);
-            rectangleShape.Texture = OutRoadTexture;
-            roadBounds.Add(rectangleShape);
-
-            rectangleShape = new RectangleShape(new Vector2f(590f, 430f));
-            rectangleShape.Position = new Vector2f(0f, 530f);
-            rectangleShape.Texture = OutRoadTexture;
-            roadBounds.Add(rectangleShape);
-
-            rectangleShape = new RectangleShape(new Vector2f(590f, 430f));
-            rectangleShape.Position = new Vector2f(690f, 0f);
-            rectangleShape.Texture = OutRoadTexture;
-            roadBounds.Add(rectangleShape);
-
-            rectangleShape = new RectangleShape(new Vector2f(590f, 430f));
-            rectangleShape.Position = new Vector2f(690f, 530f);
-            rectangleShape.Texture = OutRoadTexture;
-            roadBounds.Add(rectangleShape);
-
-            rectangleShape = new RectangleShape(new Vector2f(100f, 100f));
-            rectangleShape.Position = new Vector2f(590f, 430f);
-            rectangleShape.Texture = RoadCenterTexture;
-            roadBounds.Add(rectangleShape);
-
-            rectangleShape = new RectangleShape(new Vector2f(100f, 430f));
-            rectangleShape.Position = new Vector2f(590f, 0f);
-            rectangleShape.Texture = RoadVerticalTexture;
-            roadBounds.Add(rectangleShape);
-
-            rectangleShape = new RectangleShape(new Vector2f(100f, 430f));
-            rectangleShape.Position = new Vector2f(590f, 530f);
-            rectangleShape.Texture = RoadVerticalTexture;
-            roadBounds.Add(rectangleShape);
-
-            rectangleShape = new RectangleShape(new Vector2f(590f, 100f));
-            rectangleShape.Position = new Vector2f(0f, 430f);
-            rectangleShape.Texture = RoadHorizontalTexture;
-            roadBounds.Add(rectangleShape);
-
-            rectangleShape = new RectangleShape(new Vector2f(590f, 100f));
-            rectangleShape.Position = new Vector2f(690f, 430f);
-            rectangleShape.Texture = RoadHorizontalTexture;
-            roadBounds.Add(rectangleShape);
-        }
-
-        private void CreateCars()
-        {
-            rightRoadCars = new List<Car>();
-            leftRoadCars = new List<Car>();
-            upRoadCars = new List<Car>();
-            downRoadCars = new List<Car>();
-
-            roadLights.TryGetValue(Car.Direction.down, out RoadLight temp);
-            downRoadCars.Add(new Car(Car.Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureDown));
-
-            roadLights.TryGetValue(Car.Direction.up, out temp);
-            upRoadCars.Add(new Car(Car.Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureUp));
-
-            roadLights.TryGetValue(Car.Direction.right, out temp);
-            rightRoadCars.Add(new Car(Car.Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureRight));
-
-            roadLights.TryGetValue(Car.Direction.left, out temp);
-            leftRoadCars.Add(new Car(Car.Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
-        }
-
-        private void CreateRoadLight()
-        {
-            roadLights = new Dictionary<Car.Direction, RoadLight>();
-            RectangleShape rightStopArea = new RectangleShape(new Vector2f(60f, 40f));
-            RectangleShape downStopArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape upStopArea = new RectangleShape(new Vector2f(40f, 60f));
-            RectangleShape leftStopArea = new RectangleShape(new Vector2f(60f, 40f));
-
-            rightStopArea.Position = new Vector2f(590f - 60f, 430f + 55f);
-            downStopArea.Position = new Vector2f(590f + 5f, 430f - 60f);
-            upStopArea.Position = new Vector2f(590f + 55f, 430f + +100f);
-            leftStopArea.Position = new Vector2f(590f + 100f, 430f + 5f);
-
-            roadLights.Add(Car.Direction.right, new RoadLight(new Vector2f(580f, 535f), Car.Direction.right, rightStopArea, RoadLight.State.Green));
-            roadLights.Add(Car.Direction.down, new RoadLight(new Vector2f(530f, 350f), Car.Direction.down, downStopArea, RoadLight.State.Red));
-            roadLights.Add(Car.Direction.up, new RoadLight(new Vector2f(700f, 535f), Car.Direction.up, upStopArea, RoadLight.State.Red));
-            roadLights.Add(Car.Direction.left, new RoadLight(new Vector2f(700f, 420f), Car.Direction.left, leftStopArea, RoadLight.State.Green));
-
-            roadLights.TryGetValue(Car.Direction.left, out RoadLight tempLeft);
-            roadLights.TryGetValue(Car.Direction.right, out RoadLight tempRight);
-            roadLights.TryGetValue(Car.Direction.up, out RoadLight tempUp);
-            roadLights.TryGetValue(Car.Direction.down, out RoadLight tempDown);
-
-            tempLeft.AssignRoadLightLeft(tempUp);
-            tempUp.AssignRoadLightLeft(tempRight);
-            tempRight.AssignRoadLightLeft(tempDown);
-            tempDown.AssignRoadLightLeft(tempLeft);
-        }
-
-        public override void Update(GameTime gameTime)
-        {
-            CarGeneration();
-            foreach (KeyValuePair<Car.Direction, RoadLight> roadLight in roadLights)
+            foreach (KeyValuePair<Direction, RoadLight> roadLight in roadLights)
             {
                 roadLight.Value.Update();
             }
-            foreach (Car car in GetAllCars())
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
             {
-                car.Update();
+                foreach (Car car in carList.Value)
+                {
+                    car.Update();
+                }
             }
             GarbageCycle();
         }
 
-        private void CarGeneration()
+        private uint carsCount()
         {
-            if (GetAllCars().Count < CAR_NUMBER_LIMIT && ASpawnIsEmpty())
+            uint i = 0;
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
             {
-                Car car;
-                Car.Direction direction;
-                RoadLight temp;
-
-                do
+                foreach (Car car in carList.Value)
                 {
-                    direction = (Car.Direction)Enum.GetValues(typeof(Car.Direction)).GetValue(new Random().Next(4));
-                    roadLights.TryGetValue(Car.Direction.left, out temp);
-                    car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft);
-                }
-                while (CollisionTest(car));
-
-                switch (car.direction)
-                {
-                    case Car.Direction.left:
-
-                        roadLights.TryGetValue(Car.Direction.left, out temp);
-                        car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft);
-                        leftRoadCars.Add(car);
-                        break;
-
-                    case Car.Direction.right:
-
-                        roadLights.TryGetValue(Car.Direction.right, out temp);
-                        car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureRight);
-                        rightRoadCars.Add(car);
-                        break;
-
-                    case Car.Direction.up:
-
-                        roadLights.TryGetValue(Car.Direction.up, out temp);
-                        car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureUp);
-                        upRoadCars.Add(car);
-                        break;
-
-                    case Car.Direction.down:
-
-                        roadLights.TryGetValue(Car.Direction.down, out temp);
-                        car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureDown);
-                        downRoadCars.Add(car);
-                        break;
+                    i++;
                 }
             }
+            return i;
         }
 
         private bool ASpawnIsEmpty()
         {
-            List<Car> cars = new List<Car>();
-            roadLights.TryGetValue(Car.Direction.left, out RoadLight temp);
-            cars.Add(new Car(Car.Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
-            cars.Add(new Car(Car.Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
-            cars.Add(new Car(Car.Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
-            cars.Add(new Car(Car.Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, CarTextureLeft));
+            List<Car> TestList = new List<Car>();
 
-            foreach (Car car in cars)
+            roadLights.TryGetValue(Direction.left, out RoadLight temp);
+
+            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+
+            foreach (Car car in TestList)
             {
-                if (!CollisionTest(car))
+                if (CollideTestSecurity(car).Count == 0)
                 {
                     return true;
                 }
@@ -250,98 +138,126 @@ namespace FourWays.Game
 
         private void GarbageCycle()
         {
-            List<Car> trashList = CollisionTest();
+            List<Car> trashList = GetCollidedCars();
             OutOfBoundsTest(trashList);
-
             EraseCollidedObjects(trashList);
         }
 
-        private List<Car> CollisionTest()
+        private List<Car> GetCollidedCars()
         {
             List<Car> trashList = new List<Car>();
 
-            foreach (Car car in GetAllCars())
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
             {
-                foreach (Car car2 in GetAllCars())
+                foreach (Car car in carList.Value)
                 {
-                    if (car != car2)
+                    foreach (KeyValuePair<Direction, List<Car>> carList2 in cars)
                     {
-                        if (car.isColliding(car2))
+                        foreach (Car car2 in carList2.Value)
                         {
-                            try
+                            if (car != car2)
                             {
-                                Console.WriteLine("Car " + car.Guid.ToString() + " collide !");
+                                if (car.isColliding(car2))
+                                {
+                                    try
+                                    {
+                                        Console.WriteLine("Car " + car.Guid.ToString() + " collide !");
 
-                                trashList.Add(car);
-                                trashList.Add(car2);
-                                DEATH_COUNTER++;
+                                        trashList.Add(car);
+                                        trashList.Add(car2);
+                                        DEATH_COUNTER++;
+                                    }
+                                    catch { }
+                                }
                             }
-                            catch { }
                         }
                     }
                 }
             }
-
             return trashList;
         }
 
-        private bool CollisionTest(Car car)
+        private List<Car> CollideTest(Car carTest)
         {
-            foreach (Car car2 in GetAllCars())
+            List<Car> carsSeen = new List<Car>();
+
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
             {
-                if (car.isColliding(car2))
+                foreach (Car car in carList.Value)
                 {
-                    return true;
+                    if (car.isColliding(carTest))
+                    {
+                        carsSeen.Add(car);
+                    }
                 }
             }
-            return false;
+            return carsSeen;
+        }
+
+        private List<Car> CollideTestSecurity(Car carTest)
+        {
+            List<Car> carsSeen = new List<Car>();
+
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
+            {
+                foreach (Car car in carList.Value)
+                {
+                    if (car.isColliding(carTest) || carTest.Driver.GetDistance(car.Shape) <= carTest.SecurityDistance)
+                    {
+                        carsSeen.Add(car);
+                    }
+                }
+            }
+            return carsSeen;
         }
 
         private void OutOfBoundsTest(List<Car> trashList)
         {
-            foreach (Car car in GetAllCars())
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
             {
-                if (car.isOutOfBounds())
+                foreach (Car car in carList.Value) 
                 {
-                    try
+                    if (car.isOutOfBounds())
                     {
-                        trashList.Add(car);
+                        try { trashList.Add(car); }
+                        catch { }
                     }
-                    catch { }
                 }
             }
         }
 
         private void EraseCollidedObjects(List<Car> trashList)
         {
+            List<Car> temp;
+
             foreach (Car car in trashList)
             {
-                switch (car.direction)
+                switch (car.originalDirection)
                 {
-                    case Car.Direction.left:
+                    case Direction.left:
 
-                        leftRoadCars.Remove(car);
+                        if (cars.TryGetValue(Direction.left, out temp)) temp.Remove(car);
                         break;
 
-                    case Car.Direction.right:
+                    case Direction.right:
 
-                        rightRoadCars.Remove(car);
+                        if (cars.TryGetValue(Direction.right, out temp)) temp.Remove(car);
                         break;
 
-                    case Car.Direction.up:
+                    case Direction.up:
 
-                        upRoadCars.Remove(car);
+                        if (cars.TryGetValue(Direction.up, out temp)) temp.Remove(car);
                         break;
 
-                    case Car.Direction.down:
+                    case Direction.down:
 
-                        downRoadCars.Remove(car);
+                        if (cars.TryGetValue(Direction.down, out temp)) temp.Remove(car);
                         break;
                 }
             }
         }
 
-        public override void Draw(GameTime gameTime)
+        internal override void Draw(GameTime gameTime)
         {
             DrawBackGround();
             DrawRoadLights();
@@ -360,36 +276,42 @@ namespace FourWays.Game
 
         private void DrawCars()
         {
-            foreach (Car car in GetAllCars())
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
             {
-                Window.Draw(car.Shape);
+                foreach (Car car in carList.Value)
+                {
+                    if (RENDER_TURNING_ZONE)
+                    {
+                        car.Objective.TurningZone.FillColor = Color.Black;
+                        Window.Draw(car.Objective.TurningZone);
+                    }
+                    Window.Draw(car.Shape);
+                    if (RENDER_SPEED)
+                    {
+                        car.Engine.speedText.Position = new Vector2f(car.Shape.Position.X + 10f, car.Shape.Position.Y + 10f);
+                        Window.Draw(car.Engine.speedText);
+                    }
+                    if (RENDER_OBJECTIVE)
+                    {
+                        Text objectiveText = new Text(car.Objective.Direction.ToString().ToUpper(), Arial, 20);
+                        objectiveText.OutlineThickness = 3;
+                        objectiveText.FillColor = Color.Blue;
+                        objectiveText.OutlineColor = Color.Cyan;
+                        objectiveText.Position = new Vector2f(car.Shape.Position.X + 10f, car.Shape.Position.Y + 10f);
+
+                        Window.Draw(objectiveText);
+                    }
+                }
             }
         }
 
         private void DrawRoadLights()
         {
-            foreach (KeyValuePair<Car.Direction, RoadLight> roadLight in roadLights)
+            foreach (KeyValuePair<Direction, RoadLight> roadLight in roadLights)
             {
                 Window.Draw(roadLight.Value.Image);
-                //Window.Draw(roadLight.Value.StopArea);
+                if (RENDER_STOP_LINE) Window.Draw(roadLight.Value.StopLine);
             }
-        }
-
-        private List<Car> GetAllCars()
-        {
-            return rightRoadCars.Concat(leftRoadCars).Concat(upRoadCars).Concat(downRoadCars).ToList();
-        }
-
-        private bool CollideTest(Car carTest)
-        {
-            foreach(Car car in GetAllCars())
-            {
-                if (car.isColliding(carTest))
-                {
-                    return true;
-                }
-            }
-            return false;
         }
     }
 }

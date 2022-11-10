@@ -8,8 +8,8 @@ namespace FourWays.Loop
 {
     public abstract class GameLoop
     {
-        public const int TARGET_FPS = 60;
-        public const float TIME_UNTIL_UPDATE = 1f / TARGET_FPS;
+        internal const int TARGET_FPS = 60;
+        internal const float TIME_UNTIL_UPDATE = 1f / TARGET_FPS;
 
         public RenderWindow Window { get; protected set; }
 
@@ -26,7 +26,7 @@ namespace FourWays.Loop
             Window.Closed += WindowClosed;
         }
 
-        public void Run()
+        internal void Run()
         {
             LoadContent();
             Initialize();
@@ -63,10 +63,10 @@ namespace FourWays.Loop
             }
         }
 
-        public abstract void LoadContent();
-        public abstract void Initialize();
-        public abstract void Update(GameTime gameTime);
-        public abstract void Draw(GameTime gameTime);
+        internal abstract void LoadContent();
+        internal abstract void Initialize();
+        internal abstract void Update(GameTime gameTime);
+        internal abstract void Draw(GameTime gameTime);
 
         private void WindowClosed(object sender, EventArgs e)
         {
