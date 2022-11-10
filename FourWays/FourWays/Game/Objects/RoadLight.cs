@@ -21,9 +21,6 @@ namespace FourWays.Game.Objects
         internal const string ORANGE_LIGHT_PATH = "./Ressources/traffic-lights-orange.png";
         internal const string RED_LIGHT_PATH = "./Ressources/traffic-lights-red.png";
 
-        private Action<RectangleShape> ExternalDrawFunction;
-        private bool BreakPointHighlightTrigger;
-
         private Texture RoadLightGreen;
         private Texture RoadLightOrange;
         private Texture RoadLightRed;
@@ -33,7 +30,7 @@ namespace FourWays.Game.Objects
         internal Direction direction;
 
         private RoadLightState actualState;
-        internal RoadLightState state 
+        internal RoadLightState state
         { 
             get
             {
@@ -48,12 +45,10 @@ namespace FourWays.Game.Objects
 
         internal RectangleShape StopLine;
 
-        public RoadLight(Vector2f position, Direction direction, RectangleShape StopLine, RoadLightState startLight, Action<RectangleShape> externalDrawFunction, bool breakPointHighlightTrigger)
+        public RoadLight(Vector2f position, Direction direction, RectangleShape StopLine, RoadLightState startLight)
         {
             LoadContent();
             Initialize(position, direction, StopLine, startLight);
-            ExternalDrawFunction = externalDrawFunction;
-            BreakPointHighlightTrigger = breakPointHighlightTrigger;
         }
 
         internal void LoadContent()
@@ -94,14 +89,7 @@ namespace FourWays.Game.Objects
             if (RoadLightLeft.state == RoadLightState.Red || 
                 state != RoadLightState.Red)
             {
-                totalTimeElapsed = clock.ElapsedTime.AsSeconds();
-                deltaTime = totalTimeElapsed - previousTimeElapsed;
-                previousTimeElapsed = totalTimeElapsed;
-
-                totalTimeBeforeUpdate += deltaTime;
-                float TEMP_TIME = state == RoadLightState.Green ? TIME_UNTIL_UPDATE * 2 : TIME_UNTIL_UPDATE;
-
-                if (totalTimeBeforeUpdate >= TEMP_TIME)
+                if (UpdateTime())
                 {
                     totalTimeBeforeUpdate = 0f;
 
@@ -125,6 +113,18 @@ namespace FourWays.Game.Objects
             {
                 totalTimeBeforeUpdate = 0f;
             }
+        }
+
+        public bool UpdateTime()
+        {
+            totalTimeElapsed = clock.ElapsedTime.AsSeconds();
+            deltaTime = totalTimeElapsed - previousTimeElapsed;
+            previousTimeElapsed = totalTimeElapsed;
+
+            totalTimeBeforeUpdate += deltaTime;
+            float TEMP_TIME = state == RoadLightState.Green ? TIME_UNTIL_UPDATE * 2 : TIME_UNTIL_UPDATE;
+
+            return totalTimeBeforeUpdate >= TEMP_TIME;
         }
 
         private void ApplyTexture(RoadLightState state)

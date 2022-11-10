@@ -14,31 +14,22 @@ namespace FourWays.Game.Objects.ObjectFactory
         Func<Car, List<Car>> CollideTest { get; }
         Func<Car, List<Car>> CollideTestSecurity { get; }
 
-        internal Texture CarTextureRight { get; private set; }
-        internal Texture CarTextureLeft { get; private set; }
-        internal Texture CarTextureUp { get; private set; }
-        internal Texture CarTextureDown { get; private set; }
+        internal Dictionary<Direction, Texture> Texture;
 
-        private Action<RectangleShape> ExternalDrawFunction;
-        private bool BreakPointHighlightTrigger;
-
-        public CarFactory(Func<Car, List<Car>> collideTest, Func<Car, List<Car>> collideTestSecurity, Font arial, Action<RectangleShape> ExternalDrawFunction, bool BreakPointHighlightTrigger)
+        public CarFactory(Func<Car, List<Car>> collideTest, Func<Car, List<Car>> collideTestSecurity, Font arial)
         {
             Arial = arial;
             CollideTest = collideTest;
-            this.ExternalDrawFunction = ExternalDrawFunction;
-            this.BreakPointHighlightTrigger = BreakPointHighlightTrigger;
-            this.CollideTestSecurity = collideTestSecurity;
-
-            LoadContent();
+            CollideTestSecurity = collideTestSecurity;
+            Texture = new Dictionary<Direction, Texture>();
         }
 
         internal void LoadContent()
         {
-            CarTextureRight = new Texture(new Image("./Ressources/car_right.png"));
-            CarTextureLeft = new Texture(new Image("./Ressources/car_left.png"));
-            CarTextureUp = new Texture(new Image("./Ressources/car_up.png"));
-            CarTextureDown = new Texture(new Image("./Ressources/car_down.png"));
+            Texture.Add(Direction.right, new Texture(new Image("./Ressources/car_right.png")));
+            Texture.Add(Direction.left, new Texture(new Image("./Ressources/car_left.png")));
+            Texture.Add(Direction.up, new Texture(new Image("./Ressources/car_up.png")));
+            Texture.Add(Direction.down, new Texture(new Image("./Ressources/car_down.png")));
         }
 
         internal Dictionary<Direction, List<Car>> CarInit(Dictionary<Direction, RoadLight> roadLights)
@@ -66,27 +57,27 @@ namespace FourWays.Game.Objects.ObjectFactory
             Direction direction;
             RoadLight temp;
 
-            Texture texture = CarTextureRight;
+            Texture texture = Texture.GetValueOrDefault(Direction.right);
             do
             {
                 direction = (Direction)Enum.GetValues(typeof(Direction)).GetValue(new Random().Next(4));
                 switch (direction)
                 {
                     case Direction.left:
-                        texture = CarTextureLeft;
+                        texture = Texture.GetValueOrDefault(Direction.left);
                         break;
                     case Direction.right:
-                        texture = CarTextureRight;
+                        texture = Texture.GetValueOrDefault(Direction.right);
                         break;
                     case Direction.up:
-                        texture = CarTextureUp;
+                        texture = Texture.GetValueOrDefault(Direction.up);
                         break;
                     case Direction.down:
-                        texture = CarTextureDown;
+                        texture = Texture.GetValueOrDefault(Direction.down);
                         break;
                 }
                 roadLights.TryGetValue(Direction.left, out temp);
-                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDrawFunction, texture, Arial, BreakPointHighlightTrigger);
+                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, Texture, Arial);
             }
             while (CollideTestSecurity(car).Count > 0);
 
@@ -96,23 +87,23 @@ namespace FourWays.Game.Objects.ObjectFactory
         private Car PopACar(Dictionary<Direction, RoadLight> roadLights, Direction direction)
         {
             roadLights.TryGetValue(direction, out RoadLight temp);
-            Texture texture = CarTextureRight;
+            Texture texture = Texture.GetValueOrDefault(Direction.right);
             switch (direction)
             {
                 case Direction.left:
-                    texture = CarTextureLeft;
+                    texture = Texture.GetValueOrDefault(Direction.left);
                     break;
                 case Direction.right:
-                    texture = CarTextureRight;
+                    texture = Texture.GetValueOrDefault(Direction.right);
                     break;
                 case Direction.up:
-                    texture = CarTextureUp;
+                    texture = Texture.GetValueOrDefault(Direction.up);
                     break;
                 case Direction.down:
-                    texture = CarTextureDown;
+                    texture = Texture.GetValueOrDefault(Direction.down);
                     break;
             }
-            return new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDrawFunction, texture, Arial, BreakPointHighlightTrigger);
+            return new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, Texture, Arial);
         }
     }
 }

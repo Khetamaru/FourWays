@@ -17,13 +17,15 @@ namespace FourWays.Game
 
         private const string WINDOW_TITLE = "Four Ways";
 
-        private const uint CAR_NUMBER_LIMIT = 16;
+        private const uint CAR_NUMBER_LIMIT = 8;
         internal uint DEATH_COUNTER = 0;
 
         private const bool TEST_ON = false;
 
-        private const bool RENDER_SPEED = false;
-        private const bool RENDER_STOP_LINE = false;
+        private bool RENDER_SPEED;
+        private bool RENDER_OBJECTIVE;
+        private bool RENDER_STOP_LINE;
+        private bool RENDER_TURNING_ZONE;
 
         private List<RectangleShape> roadBounds;
 
@@ -38,9 +40,29 @@ namespace FourWays.Game
         {
             Arial = new Font("./fonts/arial.ttf");
 
-            CarFactory = new CarFactory(CollideTest, CollideTestSecurity, Arial, ExternalDraw, TEST_ON);
+            CarFactory = new CarFactory(CollideTest, CollideTestSecurity, Arial);
             RoadBoundFactory = new RoadBoundFactory();
-            RoadLightFactory = new RoadLightFactory(ExternalDraw, TEST_ON);
+            RoadLightFactory = new RoadLightFactory();
+
+            TestMode();
+        }
+
+        private void TestMode()
+        {
+            if (TEST_ON)
+            {
+                RENDER_SPEED = true;
+                RENDER_OBJECTIVE = false;
+                RENDER_STOP_LINE = true;
+                RENDER_TURNING_ZONE = true;
+            }
+            else
+            {
+                RENDER_SPEED = false;
+                RENDER_OBJECTIVE = true;
+                RENDER_STOP_LINE = false;
+                RENDER_TURNING_ZONE = false;
+            }
         }
 
         internal override void LoadContent()
@@ -99,10 +121,10 @@ namespace FourWays.Game
 
             roadLights.TryGetValue(Direction.left, out RoadLight temp);
 
-            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDraw, null, Arial, TEST_ON));
-            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDraw, null, Arial, TEST_ON));
-            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDraw, null, Arial, TEST_ON));
-            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, ExternalDraw, null, Arial, TEST_ON));
+            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
 
             foreach (Car car in TestList)
             {
@@ -116,13 +138,12 @@ namespace FourWays.Game
 
         private void GarbageCycle()
         {
-            List<Car> trashList = CollisionTest();
+            List<Car> trashList = GetCollidedCars();
             OutOfBoundsTest(trashList);
-
             EraseCollidedObjects(trashList);
         }
 
-        private List<Car> CollisionTest()
+        private List<Car> GetCollidedCars()
         {
             List<Car> trashList = new List<Car>();
 
@@ -156,6 +177,40 @@ namespace FourWays.Game
             return trashList;
         }
 
+        private List<Car> CollideTest(Car carTest)
+        {
+            List<Car> carsSeen = new List<Car>();
+
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
+            {
+                foreach (Car car in carList.Value)
+                {
+                    if (car.isColliding(carTest))
+                    {
+                        carsSeen.Add(car);
+                    }
+                }
+            }
+            return carsSeen;
+        }
+
+        private List<Car> CollideTestSecurity(Car carTest)
+        {
+            List<Car> carsSeen = new List<Car>();
+
+            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
+            {
+                foreach (Car car in carList.Value)
+                {
+                    if (car.isColliding(carTest) || carTest.Driver.GetDistance(car.Shape) <= carTest.SecurityDistance)
+                    {
+                        carsSeen.Add(car);
+                    }
+                }
+            }
+            return carsSeen;
+        }
+
         private void OutOfBoundsTest(List<Car> trashList)
         {
             foreach (KeyValuePair<Direction, List<Car>> carList in cars)
@@ -177,7 +232,7 @@ namespace FourWays.Game
 
             foreach (Car car in trashList)
             {
-                switch (car.direction)
+                switch (car.originalDirection)
                 {
                     case Direction.left:
 
@@ -225,12 +280,26 @@ namespace FourWays.Game
             {
                 foreach (Car car in carList.Value)
                 {
+                    if (RENDER_TURNING_ZONE)
+                    {
+                        car.Objective.TurningZone.FillColor = Color.Black;
+                        Window.Draw(car.Objective.TurningZone);
+                    }
                     Window.Draw(car.Shape);
-
                     if (RENDER_SPEED)
                     {
                         car.Engine.speedText.Position = new Vector2f(car.Shape.Position.X + 10f, car.Shape.Position.Y + 10f);
                         Window.Draw(car.Engine.speedText);
+                    }
+                    if (RENDER_OBJECTIVE)
+                    {
+                        Text objectiveText = new Text(car.Objective.Direction.ToString().ToUpper(), Arial, 20);
+                        objectiveText.OutlineThickness = 3;
+                        objectiveText.FillColor = Color.Blue;
+                        objectiveText.OutlineColor = Color.Cyan;
+                        objectiveText.Position = new Vector2f(car.Shape.Position.X + 10f, car.Shape.Position.Y + 10f);
+
+                        Window.Draw(objectiveText);
                     }
                 }
             }
@@ -243,47 +312,6 @@ namespace FourWays.Game
                 Window.Draw(roadLight.Value.Image);
                 if (RENDER_STOP_LINE) Window.Draw(roadLight.Value.StopLine);
             }
-        }
-
-        internal void ExternalDraw(RectangleShape rectangleShape)
-        {
-            Window.Draw(rectangleShape);
-
-            Window.Display();
-        }
-
-        private List<Car> CollideTest(Car carTest)
-        {
-            List<Car> carsSeen = new List<Car>();
-
-            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
-            {
-                foreach (Car car in carList.Value)
-                {
-                    if (car.isColliding(carTest))
-                    {
-                        carsSeen.Add(car);
-                    }
-                }
-            }
-            return carsSeen;
-        }
-
-        private List<Car> CollideTestSecurity(Car carTest)
-        {
-            List<Car> carsSeen = new List<Car>();
-
-            foreach (KeyValuePair<Direction, List<Car>> carList in cars)
-            {
-                foreach (Car car in carList.Value)
-                {
-                    if (car.isColliding(carTest) || carTest.Driver.GetDistance(car.Shape) <= carTest.SecurityDistance)
-                    {
-                        carsSeen.Add(car);
-                    }
-                }
-            }
-            return carsSeen;
         }
     }
 }

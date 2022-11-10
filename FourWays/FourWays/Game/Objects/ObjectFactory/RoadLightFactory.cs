@@ -13,13 +13,8 @@ namespace FourWays.Game.Objects.ObjectFactory
         private const uint GROUND_WIDTH = (DEFAULT_WINDOW_WIDTH - 110) / 2;
         private const uint GROUND_HEIGHT = (DEFAULT_WINDOW_HEIGHT - 100) / 2;
 
-        private Action<RectangleShape> ExternalDrawFunction;
-        private bool BreakPointHighlightTrigger;
-
-        public RoadLightFactory(Action<RectangleShape> ExternalDrawFunction, bool BreakPointHighlightTrigger)
+        public RoadLightFactory()
         {
-            this.ExternalDrawFunction = ExternalDrawFunction;
-            this.BreakPointHighlightTrigger = BreakPointHighlightTrigger;
         }
 
         internal Dictionary<Direction, RoadLight> RoadLightInit()
@@ -49,7 +44,7 @@ namespace FourWays.Game.Objects.ObjectFactory
 
             StopArea.Position = new Vector2f(PositionXStop, PositionYStop);
 
-            return new RoadLight(new Vector2f(PositionX, PositionY), direction, StopArea, roadLightState, ExternalDrawFunction, BreakPointHighlightTrigger);
+            return new RoadLight(new Vector2f(PositionX, PositionY), direction, StopArea, roadLightState);
         }
 
         private void RoadLightAlignement(Dictionary<Direction, RoadLight> roadLights)

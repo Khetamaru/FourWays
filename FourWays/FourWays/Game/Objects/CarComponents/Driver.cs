@@ -18,7 +18,9 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
 
         internal void Update()
         {
-            ChooseAnAction(GetInfos());
+            (GameObject, Car) target = GetInfos();
+            AffectStatus(target.Item1);
+            ChooseAnAction(target);
         }
 
         private (GameObject, Car) GetInfos()
@@ -69,7 +71,8 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                 {
                     switch (Math.Abs((Parent.move + car.move).X))
                     {
-                        case 0: trashList.Add(car); break;
+                        case 0: 
+                            if(!Parent.Objective.IsCuttingWay(Parent.direction) || !Parent.Objective.IsObjectiveCarable(Parent.direction)) trashList.Add(car); break;
                         case 1:
                             if (car.RoadLight.state == RoadLightState.Red && car.IsBehindTheLine()) trashList.Add(car);
                             else if (car.direction == Direction.down)
@@ -135,15 +138,13 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
 
         private void ChooseAnAction((GameObject, Car) target)
         {
-            AffectStatus(target.Item1);
-
             switch (Parent.status)
             {
                 case CarState.Go:
 
                     if (Parent.Engine.UpgradeTest() && Parent.Engine.BoxSpeed != Engine.Speed.Five) Parent.UpgradeCore();
                     else Parent.MoveForward();
-                    
+
                     break;
 
                 case CarState.Decelerate:
@@ -159,10 +160,21 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                     if (target.Item2 != null) Parent.MoveBack(AnalyseClosestCarBack(target.Item2));
                     else Parent.MoveBack(AccuracyPourcentageStackValue);
                     break;
+
+                case CarState.Turning:
+
+                    if (Parent.AbleToTurn())
+                    {
+                        Parent.Turn(Parent.Objective.Direction);
+                    }
+                    else
+                    {
+                        AffectStatusDefault(target.Item1);
+                        ChooseAnAction(target);
+                    }
+                    break;
             }
         }
-
-        private static double SpeedBoost(double speed) => speed * 2;
 
         private double GetSlowStrengthCar(Car car) => GetSlowStrength(Math.Abs(GetDistance(car.Shape)));
 
@@ -182,6 +194,30 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
         }
 
         private void AffectStatus(GameObject target)
+        {
+            if (target == null)
+            {
+                if (Parent.Objective.IsObjectiveCarable(Parent.direction)) Parent.status = CarState.Turning;
+                else Parent.status = CarState.Go;
+            }
+            else if ((target as Car) != null && GetDistance((target as Car).Shape) < Parent.SecurityDistance)
+            {
+                if (Parent.Objective.IsObjectiveCarable(Parent.direction) && 
+                    GetDistance(Parent.Objective.TurningZone) < GetDistance((target as Car).Shape))
+                     Parent.status = CarState.Turning;
+                else Parent.status = CarState.BackForward;
+            }
+            else
+            {
+                if (Parent.Objective.IsObjectiveCarable(Parent.direction) && 
+                   ((target as RoadLight) != null && GetDistance(Parent.Objective.TurningZone) < GetDistance((target as RoadLight).StopLine) ||
+                    (target as Car) != null       && GetDistance(Parent.Objective.TurningZone) < GetDistance((target as Car).Shape)))
+                     Parent.status = CarState.Turning;
+                else Parent.status = CarState.Decelerate;
+            }
+        }
+
+        private void AffectStatusDefault(GameObject target)
         {
             if (target == null)
             {

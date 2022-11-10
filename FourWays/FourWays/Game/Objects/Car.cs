@@ -1,4 +1,5 @@
-﻿using FourWays.Game.Objects.CarFactory.CarComponents;
+﻿using FourWays.Game.Objects.CarComponents;
+using FourWays.Game.Objects.CarFactory.CarComponents;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
@@ -16,17 +17,16 @@ namespace FourWays.Game.Objects
 
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
-
-        private Action<RectangleShape> ExternalDrawFunction;
-        private bool BreakPointHighlightTrigger;
         private Func<Car, List<Car>> CollideTest { get; }
-        internal Texture Texture { get; }
+        internal Dictionary<Direction, Texture> Texture { get; }
 
         internal Guid Guid;
-        internal RectangleShape Shape { get; private set; }
+        internal RectangleShape Shape;
         internal RoadLight RoadLight { get; }
 
         private Direction actualDirection;
+
+        internal Direction originalDirection;
         internal Direction direction
         {
             get => actualDirection;
@@ -48,19 +48,21 @@ namespace FourWays.Game.Objects
 
         internal Engine Engine;
         internal Driver Driver;
+        internal Objective Objective;
 
-        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Action<RectangleShape> ExternalDrawFunction, Texture texture, Font arial, bool BreakPointHighlightTrigger)
+        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Dictionary<Direction, Texture> texture, Font arial)
         {
             Guid = Guid.NewGuid();
             Arial = arial;
             this.direction = direction;
+            originalDirection = direction;
             status = CarState.Go;
             this.WindowWidth = WindowWidth;
             this.WindowHeight = WindowHeight;
             RoadLight = roadLight;
             CollideTest = collideTest;
-            this.ExternalDrawFunction = ExternalDrawFunction;
-            this.BreakPointHighlightTrigger = BreakPointHighlightTrigger;
+            Texture = texture;
+
             switch (direction)
             {
                 case Direction.down:
@@ -83,9 +85,14 @@ namespace FourWays.Game.Objects
                     Shape.Position = new Vector2f(0f, WindowHeight / 2 + 2f);
                     break;
             }
-            if (texture != null) Shape.Texture = texture;
+            if (Texture != null)
+            {
+                Texture textureTemp = Texture.GetValueOrDefault(direction);
+                Shape.Texture = textureTemp;
+            }
             Engine = new Engine(Engine.Speed.Three, arial);
             Driver = new Driver(this);
+            Objective = new Objective(direction, WindowWidth, WindowHeight);
         }
 
         private void AssignMove(Direction direction)
@@ -127,6 +134,7 @@ namespace FourWays.Game.Objects
 
             SlowDown(moveStrength);
         }
+
         private void SpeedUp()
         {
             Engine.SpeedUp();
@@ -138,10 +146,11 @@ namespace FourWays.Game.Objects
             Move();
         }
 
-        private void Turn(Vector2f NewDirection)
+        internal void Turn(Direction NewDirection)
         {
-            // do something
-
+            Objective.ConvertShape(this);
+            direction = Objective.Direction;
+            ChangeTexture();
             Move();
         }
 
@@ -152,6 +161,28 @@ namespace FourWays.Game.Objects
         internal void DowngradeCore()
         {
             Engine.DowngradeCore();
+        }
+
+        private void ChangeTexture()
+        {
+            Texture textureTemp = Texture.GetValueOrDefault(direction);
+            if (textureTemp != null) Shape.Texture = textureTemp;
+        }
+
+        internal bool AbleToTurn() => !CollisionAfterTurning() && Objective.IsInTurningZone(Shape);
+
+        private bool CollisionAfterTurning()
+        {
+            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X, Shape.Size.Y));
+
+            shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y);
+
+            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
+            car.Guid = Guid;
+            car.Shape = shape;
+            car.Turn(Objective.Direction);
+
+            return CollideTest.Invoke(car).Count > 0;
         }
 
         internal List<Car> LookCars(bool front)
@@ -168,15 +199,12 @@ namespace FourWays.Game.Objects
 
             shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
 
-            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, ExternalDrawFunction, Texture, Arial, BreakPointHighlightTrigger);
+            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
             car.Guid = Guid;
             car.Shape = shape;
 
             return CollideTest.Invoke(car);
         }
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         internal bool isColliding(Car car)
         {
@@ -244,6 +272,7 @@ namespace FourWays.Game.Objects
     {
         Go,
         Decelerate,
+        Turning,
         BackForward
     }
 }
