@@ -1,4 +1,5 @@
 ﻿using FourWays.Game.Objects;
+using FourWays.Game.Objects.Graphs;
 using FourWays.Game.Objects.ObjectFactory;
 using FourWays.Loop;
 using SFML.Graphics;
@@ -18,7 +19,6 @@ namespace FourWays.Game
         private const string WINDOW_TITLE = "Four Ways";
 
         private const uint CAR_NUMBER_LIMIT = 8;
-        internal uint DEATH_COUNTER = 0;
 
         private const bool TEST_ON = false;
 
@@ -26,6 +26,8 @@ namespace FourWays.Game
         private bool RENDER_OBJECTIVE;
         private bool RENDER_STOP_LINE;
         private bool RENDER_TURNING_ZONE;
+
+        internal DeathGraph DeathGraph;
 
         private List<RectangleShape> roadBounds;
 
@@ -39,6 +41,8 @@ namespace FourWays.Game
         public FourWaysSimulator() : base(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, WINDOW_TITLE, Color.White)
         {
             Arial = new Font("./fonts/arial.ttf");
+
+            DeathGraph = new DeathGraph(this, new Vector2f(DEFAULT_WINDOW_WIDTH / 2 + 75f, 25f), Color.Cyan);
 
             CarFactory = new CarFactory(CollideTest, CollideTestSecurity, Arial);
             RoadBoundFactory = new RoadBoundFactory();
@@ -165,7 +169,7 @@ namespace FourWays.Game
 
                                         trashList.Add(car);
                                         trashList.Add(car2);
-                                        DEATH_COUNTER++;
+                                        DeathGraph.AddDeathCounter(DeathGraph.DeathColor.Red);
                                     }
                                     catch { }
                                 }
@@ -264,6 +268,7 @@ namespace FourWays.Game
             DrawCars();
 
             DebugUtility.DrawPerformanceData(this, Color.White);
+            DeathGraph.DrawDataTab();
         }
 
         private void DrawBackGround()

@@ -169,7 +169,7 @@ namespace FourWays.Game.Objects
             if (textureTemp != null) Shape.Texture = textureTemp;
         }
 
-        internal bool AbleToTurn() => !CollisionAfterTurning() && Objective.IsInTurningZone(Shape);
+        internal bool AbleToTurn() => Objective.IsInTurningZone(Shape) && !CollisionAfterTurning();
 
         private bool CollisionAfterTurning()
         {
@@ -180,6 +180,7 @@ namespace FourWays.Game.Objects
             Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
             car.Guid = Guid;
             car.Shape = shape;
+            car.Objective = Objective;
             car.Turn(Objective.Direction);
 
             return CollideTest.Invoke(car).Count > 0;
