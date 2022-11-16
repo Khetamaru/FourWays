@@ -31,10 +31,10 @@ namespace FourWays.Game.Objects.Graphs
         {
             ConsoleFont = new Font(CONSOLE_FONT_PATH);
             Parent = parent;
-            Position = position;
             FontColor = fontColor;
 
             InitDeathCounters();
+            Position = new Vector2f(position.X - 50 * DeathCounters.Length - 25, position.Y);
         }
 
         private void InitDeathCounters()

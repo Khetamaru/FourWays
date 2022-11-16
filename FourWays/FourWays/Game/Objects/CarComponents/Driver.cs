@@ -40,7 +40,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             return GetDistance(closestCar.Shape) < GetDistance(closestRoadLight.StopLine) ? closestCar : closestRoadLight;
         }
 
-        private Car AnalyseCarsSeen(List<Car> cars)
+        internal Car AnalyseCarsSeen(List<Car> cars)
         {
             if (cars.Count > 0) TrashNotDangerousCars(cars);
 
@@ -77,9 +77,9 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                             if (car.RoadLight.state == RoadLightState.Red && car.IsBehindTheLine()) trashList.Add(car);
                             else if (car.direction == Direction.down)
                             {
-                                if (car.Shape.Position.Y > (Parent.Shape.Position.Y + Parent.Shape.Size.Y)) trashList.Add(car);
+                                if (car.Shape.Position.Y > (Parent.Shape.Position.Y + Parent.Shape.Size.Y + 50f)) trashList.Add(car);
                             }
-                            else if (car.Shape.Position.Y + car.Shape.Size.Y < Parent.Shape.Position.Y) trashList.Add(car);
+                            else if (car.Shape.Position.Y + car.Shape.Size.Y + 50f < Parent.Shape.Position.Y) trashList.Add(car);
                             break;
                         case 2: if (Parent.Engine.RotationSpeed <= car.Engine.RotationSpeed && GetDistance(car.Shape) > Parent.SecurityDistance) trashList.Add(car); break;
                     }
@@ -93,9 +93,9 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                             if (car.RoadLight.state == RoadLightState.Red && car.IsBehindTheLine()) trashList.Add(car);
                             if (car.direction == Direction.right)
                             {
-                                if (car.Shape.Position.X > (Parent.Shape.Position.X + Parent.Shape.Size.X)) trashList.Add(car);
+                                if (car.Shape.Position.X > (Parent.Shape.Position.X + Parent.Shape.Size.X + 50f)) trashList.Add(car);
                             }
-                            else if (car.Shape.Position.X + car.Shape.Size.X < Parent.Shape.Position.X) trashList.Add(car);
+                            else if (car.Shape.Position.X + car.Shape.Size.X + 50f < Parent.Shape.Position.X) trashList.Add(car);
                             break;
                         case 2: if (Parent.Engine.RotationSpeed <= car.Engine.RotationSpeed && GetDistance(car.Shape) > Parent.SecurityDistance) trashList.Add(car); break;
                     }
