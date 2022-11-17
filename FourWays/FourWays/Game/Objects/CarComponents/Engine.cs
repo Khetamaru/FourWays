@@ -150,7 +150,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
 
         private void SpeedUpRotationSpeed()
         {
-            double moveStrength = (double)BoxSpeed / 150;
+            double moveStrength = (double)BoxSpeed > 0 ? (double)BoxSpeed / 150 : (double)1/150;
 
             RotationSpeed = BoxSpeed switch
             {
@@ -159,7 +159,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                 Speed.Three => (RotationSpeed + moveStrength >= 6) ? 6.0000 : RotationSpeed + Math.Round(moveStrength, 4),
                 Speed.Four => (RotationSpeed + moveStrength >= 8) ? 8.0000 : RotationSpeed + Math.Round(moveStrength, 4),
                 Speed.Five => (RotationSpeed + moveStrength >= 10) ? 10.0000 : RotationSpeed + Math.Round(moveStrength, 4),
-                Speed.Back => RotationSpeed + moveStrength,
+                Speed.Back => RotationSpeed + Math.Round(moveStrength, 4),
                 _ => throw new NotImplementedException()
             };
         }

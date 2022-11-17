@@ -32,6 +32,7 @@ namespace FourWays.Game
         private bool RENDER_OBJECTIVE;
         private bool RENDER_STOP_LINE;
         private bool RENDER_TURNING_ZONE;
+        private bool RENDER_SHADE;
 
         internal DeathGraph DeathGraph;
 
@@ -67,6 +68,7 @@ namespace FourWays.Game
                     RENDER_OBJECTIVE = false;
                     RENDER_STOP_LINE = false;
                     RENDER_TURNING_ZONE = false;
+                    RENDER_SHADE = false;
                     break;
 
                 case GAME_MODE.TEST_MODE_1:
@@ -75,6 +77,7 @@ namespace FourWays.Game
                     RENDER_OBJECTIVE = false;
                     RENDER_STOP_LINE = true;
                     RENDER_TURNING_ZONE = false;
+                    RENDER_SHADE = false;
                     break;
 
                 case GAME_MODE.TEST_MODE_2:
@@ -83,6 +86,7 @@ namespace FourWays.Game
                     RENDER_OBJECTIVE = true;
                     RENDER_STOP_LINE = false;
                     RENDER_TURNING_ZONE = false;
+                    RENDER_SHADE = true;
                     break;
             }
         }
@@ -183,7 +187,10 @@ namespace FourWays.Game
                                 {
                                     try
                                     {
-                                        Console.WriteLine("Car " + car.Guid.ToString() + " collide !");
+                                        Console.WriteLine((Math.Round(Time.FromSeconds(GameTime.TotalTimeElapsed).AsSeconds() / 60, 0, MidpointRounding.ToNegativeInfinity) +
+                                         "m:" +
+                                         Math.Round(Time.FromSeconds(GameTime.TotalTimeElapsed).AsSeconds() % 60, 0) +
+                                         "s") + " Car " + car.Guid.ToString() + " collide !");
 
                                         trashList.Add(car);
                                         trashList.Add(car2);
@@ -207,7 +214,7 @@ namespace FourWays.Game
             {
                 foreach (Car car in carList.Value)
                 {
-                    if (car.isColliding(carTest))
+                    if (car.isColliding(carTest) && car.Guid != carTest.Guid)
                     {
                         carsSeen.Add(car);
                     }
@@ -299,6 +306,7 @@ namespace FourWays.Game
 
         private void DrawCars()
         {
+            bool trigger = false;
             foreach (KeyValuePair<Direction, List<Car>> carList in cars)
             {
                 foreach (Car car in carList.Value)
@@ -323,6 +331,11 @@ namespace FourWays.Game
                         objectiveText.Position = new Vector2f(car.Shape.Position.X + 10f, car.Shape.Position.Y + 10f);
 
                         Window.Draw(objectiveText);
+                    }
+                    if (RENDER_SHADE && !trigger)
+                    {
+                        Window.Draw(car.ShowShade());
+                        trigger = true;
                     }
                 }
             }

@@ -2,7 +2,6 @@
 using FourWays.Game.Objects.CarFactory.CarComponents;
 using SFML.Graphics;
 using SFML.System;
-using SFML.Window;
 using System;
 using System.Collections.Generic;
 
@@ -190,32 +189,59 @@ namespace FourWays.Game.Objects
             car.Objective = Objective;
             car.Turn(Objective.Direction);
 
-            Car NeerestCar = Driver.AnalyseCarsSeen(LookCars(true));
+            Car NeerestCar = Driver.AnalyseCarsSeen(LookCars());
 
             return CollideTest.Invoke(car).Count > 0 || 
                   (NeerestCar != null && 
                    Driver.GetDistance(NeerestCar.Shape) <= NeerestCar.SecurityDistance);
         }
 
-        internal List<Car> LookCars(bool front)
+        private RectangleShape GenerateShade()
         {
             float multiplier = (float)Engine.RotationSpeed * 2;
 
-            float distanceX = front ? (move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * move.X : (-move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * -move.X;
-            float distanceY = front ? (move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * move.Y : (-move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * -move.Y;
+            RectangleShape shape = new RectangleShape(new Vector2f(Math.Max(Shape.Size.X, Shape.Size.Y) * (multiplier < 2 ? 2 : multiplier), Math.Max(Shape.Size.X, Shape.Size.Y) * (multiplier < 2 ? 2 : multiplier)));
 
-            float recenterX = multiplier / 2 * Math.Abs(move.Y);
-            float recenterY = multiplier / 2 * Math.Abs(move.X);
+            float diffX = (shape.Size.X / 2) - (Shape.Size.X / 2);
+            float diffY = (shape.Size.Y / 2) - (Shape.Size.Y / 2);
 
-            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X * multiplier, Shape.Size.Y * multiplier));
+            switch (direction)
+            {
+                case Direction.left:
+                    shape.Position = new Vector2f(Shape.Position.X + -shape.Size.X, Shape.Position.Y - diffY);
+                    break;
+                case Direction.right:
+                    shape.Position = new Vector2f(Shape.Position.X + Shape.Size.X, Shape.Position.Y - diffY);
+                    break;
+                case Direction.up:
+                    shape.Position = new Vector2f(Shape.Position.X - diffX, Shape.Position.Y + -shape.Size.Y);
+                    break;
+                case Direction.down:
+                    shape.Position = new Vector2f(Shape.Position.X - diffX, Shape.Position.Y + Shape.Size.Y);
+                    break;
+            }
 
-            shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
+            return shape;
+        }
+
+        internal List<Car> LookCars()
+        {
+            RectangleShape shape = GenerateShade();
 
             Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
             car.Guid = Guid;
             car.Shape = shape;
 
             return CollideTest.Invoke(car);
+        }
+
+        internal RectangleShape ShowShade()
+        {
+            RectangleShape shape = GenerateShade();
+
+            shape.FillColor = Color.Yellow;
+
+            return shape;
         }
 
         internal bool isColliding(Car car)
@@ -272,7 +298,6 @@ namespace FourWays.Game.Objects
     {
         Go,
         Decelerate,
-        Turning,
-        BackForward
+        Turning
     }
 }
