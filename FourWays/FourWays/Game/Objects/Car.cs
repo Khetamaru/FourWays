@@ -48,7 +48,6 @@ namespace FourWays.Game.Objects
         internal Engine Engine;
         internal Driver Driver;
         internal Objective Objective;
-        internal int Limitor;
 
         public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Dictionary<Direction, Texture> texture, Font arial)
         {
@@ -93,7 +92,6 @@ namespace FourWays.Game.Objects
             Engine = new Engine(Engine.Speed.Three, arial);
             Driver = new Driver(this);
             Objective = new Objective(direction, WindowWidth, WindowHeight);
-            Limitor = 3;
         }
 
         private void AssignMove(Direction direction)
@@ -125,7 +123,7 @@ namespace FourWays.Game.Objects
 
         internal void MoveForward()
         {
-            if (!LimitorTrigger()) SpeedUp();
+            SpeedUp();
             Move();
         }
 
@@ -170,11 +168,6 @@ namespace FourWays.Game.Objects
             if (textureTemp != null) Shape.Texture = textureTemp;
         }
 
-        private bool LimitorTrigger()
-        {
-            return IsBehindTheLine() && (int)Engine.BoxSpeed >= Limitor;
-        }
-
         internal bool AbleToTurn() => Objective.IsInTurningZone(Shape) && !CollisionAfterTurning();
 
         private bool CollisionAfterTurning()
@@ -183,13 +176,13 @@ namespace FourWays.Game.Objects
 
             shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y);
 
-            Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
+            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
             car.Guid = Guid;
             car.Shape = shape;
             car.Objective = Objective;
             car.Turn(Objective.Direction);
 
-            Car NeerestCar = Driver.AnalyseCarsSeen(LookCars());
+            Car NeerestCar = Driver.AnalyseCarsSeen(LookCars(true));
 
             return CollideTest.Invoke(car).Count > 0 || 
                   (NeerestCar != null && 
@@ -253,9 +246,21 @@ namespace FourWays.Game.Objects
             return false;
         }
 
+        internal bool isBeforeTheStopLine()
+        {
+            switch (direction)
+            {
+                case Direction.left: return Shape.Position.X >= RoadLight.StopLine.Position.X;
+                case Direction.right: return Shape.Position.X + Shape.Size.X <= RoadLight.StopLine.Position.X;
+                case Direction.up: return Shape.Position.Y >= RoadLight.StopLine.Position.Y;
+                case Direction.down: return Shape.Position.Y + Shape.Size.Y <= RoadLight.StopLine.Position.Y;
+            }
+            return true;
+        }
+
         internal RoadLight LookAtRoadLights()
         {
-            return (IsBehindTheLine() && (RoadLight.state == RoadLightState.Red || RoadLight.state == RoadLightState.Orange)) ? RoadLight : null;
+            return (isBeforeTheStopLine() && (RoadLight.state == RoadLightState.Red || RoadLight.state == RoadLightState.Orange)) ? RoadLight : null;
         }
 
         internal bool isOutOfBounds()
@@ -275,7 +280,7 @@ namespace FourWays.Game.Objects
 
         internal bool IsBehindTheLine()
         {
-            return originalDirection switch
+            return direction switch
             {
                 Direction.left => RoadLight.StopLine.Position.X < Shape.Position.X,
                 Direction.right => RoadLight.StopLine.Position.X > Shape.Position.X,

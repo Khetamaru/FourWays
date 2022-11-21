@@ -40,7 +40,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             return GetDistance(closestCar.Shape) < GetDistance(closestRoadLight.StopLine) ? closestCar : closestRoadLight;
         }
 
-        internal Car AnalyseCarsSeen(List<Car> cars)
+        private Car AnalyseCarsSeen(List<Car> cars)
         {
             if (cars.Count > 0) TrashNotDangerousCars(cars);
 
