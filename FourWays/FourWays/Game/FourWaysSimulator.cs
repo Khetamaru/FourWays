@@ -20,7 +20,13 @@ namespace FourWays.Game
 
         private const uint CAR_NUMBER_LIMIT = 8;
 
-        private const bool TEST_ON = false;
+        private const GAME_MODE TEST_ON = GAME_MODE.TEST_MODE_2;
+        private enum GAME_MODE
+        {
+            DEFAULT,
+            TEST_MODE_1,
+            TEST_MODE_2
+        }
 
         private bool RENDER_SPEED;
         private bool RENDER_OBJECTIVE;
@@ -43,7 +49,7 @@ namespace FourWays.Game
         {
             Arial = new Font("./fonts/arial.ttf");
 
-            DeathGraph = new DeathGraph(this, new Vector2f(DEFAULT_WINDOW_WIDTH / 2 + 75f, 25f), Color.Cyan);
+            DeathGraph = new DeathGraph(this, new Vector2f(DEFAULT_WINDOW_WIDTH, 15f), Color.Cyan);
 
             CarFactory = new CarFactory(CollideTest, CollideTestSecurity, Arial);
             RoadBoundFactory = new RoadBoundFactory();
@@ -54,7 +60,7 @@ namespace FourWays.Game
 
         private void TestMode()
         {
-            if (TEST_ON)
+            switch (TEST_ON)
             {
                 case GAME_MODE.DEFAULT:
 
@@ -82,13 +88,6 @@ namespace FourWays.Game
                     RENDER_TURNING_ZONE = false;
                     RENDER_SHADE = true;
                     break;
-            }
-            else
-            {
-                RENDER_SPEED = false;
-                RENDER_OBJECTIVE = true;
-                RENDER_STOP_LINE = false;
-                RENDER_TURNING_ZONE = false;
             }
         }
 
@@ -188,10 +187,10 @@ namespace FourWays.Game
                                 {
                                     try
                                     {
-                                        Console.WriteLine((Math.Round(Time.FromSeconds(GameTime.TotalTimeElapsed).AsSeconds() / 60, 0, MidpointRounding.ToNegativeInfinity) +
+                                        Console.WriteLine(Math.Round(Time.FromSeconds(GameTime.TotalTimeElapsed).AsSeconds() / 60, 0, MidpointRounding.ToNegativeInfinity) +
                                          "m:" +
                                          Math.Round(Time.FromSeconds(GameTime.TotalTimeElapsed).AsSeconds() % 60, 0) +
-                                         "s") + " Car " + car.Guid.ToString() + " collide !");
+                                         "s" + " Car " + car.Guid.ToString() + " collide !");
 
                                         trashList.Add(car);
                                         trashList.Add(car2);

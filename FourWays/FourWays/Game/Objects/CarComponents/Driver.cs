@@ -40,7 +40,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
             return GetDistance(closestCar.Shape) < GetDistance(closestRoadLight.StopLine) ? closestCar : closestRoadLight;
         }
 
-        private Car AnalyseCarsSeen(List<Car> cars)
+        internal Car AnalyseCarsSeen(List<Car> cars)
         {
             if (cars.Count > 0) TrashNotDangerousCars(cars);
 
@@ -64,46 +64,31 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
         private List<Car> FeedTrashList(List<Car> cars)
         {
             List<Car> trashList = new List<Car>();
+            float vector;
 
-            foreach(Car car in cars)
+            foreach (Car car in cars)
             {
-                if (Parent.direction == Direction.left || Parent.direction == Direction.right)
+                vector = Parent.direction == Direction.left || Parent.direction == Direction.right ? Math.Abs((Parent.move + car.move).X) : Math.Abs((Parent.move + car.move).Y);
+                switch (vector)
                 {
-                    switch (Math.Abs((Parent.move + car.move).X))
-                    {
-                        case 0: 
-                            if(!car.Objective.IsCuttingWay(car.direction) || 
-                               !car.Objective.IsObjectiveCarable(car.direction) ||
-                               (car.RoadLight.state == RoadLightState.Red || car.RoadLight.state == RoadLightState.Orange) && car.IsBehindTheLine()) trashList.Add(car); break;
-                        case 1:
-                            if ((car.RoadLight.state == RoadLightState.Red || car.RoadLight.state == RoadLightState.Orange) && car.IsBehindTheLine()) trashList.Add(car);
-                            else if (car.direction == Direction.down)
-                            {
-                                if (car.Shape.Position.Y > (Parent.Shape.Position.Y + Parent.Shape.Size.Y)) trashList.Add(car);
-                            }
-                            else if (car.Shape.Position.Y + car.Shape.Size.Y < Parent.Shape.Position.Y) trashList.Add(car);
-                            break;
-                        case 2: if (Parent.Engine.RotationSpeed <= car.Engine.RotationSpeed && GetDistance(car.Shape) > Parent.SecurityDistance) trashList.Add(car); break;
-                    }
-                }
-                else
-                {
-                    switch (Math.Abs((Parent.move + car.move).Y))
-                    {
-                        case 0:
-                            if (!car.Objective.IsCuttingWay(car.direction) ||
-                                !car.Objective.IsObjectiveCarable(car.direction) ||
-                                 car.RoadLight.state == RoadLightState.Red && car.IsBehindTheLine()) trashList.Add(car); break;
-                        case 1:
-                            if (car.RoadLight.state == RoadLightState.Red && car.IsBehindTheLine()) trashList.Add(car);
-                            if (car.direction == Direction.right)
-                            {
-                                if (car.Shape.Position.X > (Parent.Shape.Position.X + Parent.Shape.Size.X)) trashList.Add(car);
-                            }
-                            else if (car.Shape.Position.X + car.Shape.Size.X < Parent.Shape.Position.X) trashList.Add(car);
-                            break;
-                        case 2: if (Parent.Engine.RotationSpeed <= car.Engine.RotationSpeed && GetDistance(car.Shape) > Parent.SecurityDistance) trashList.Add(car); break;
-                    }
+                    case 0:
+                        if (!Parent.Objective.IsObjectiveCarable(Parent.direction))                                                                    trashList.Add(car);
+                        else if (!Parent.Objective.IsCuttingWay(Parent.direction))                                                                     trashList.Add(car);
+                        else if (Parent.IsBehindTheLine() && !car.Objective.IsObjectiveCarable(car.direction))                                         trashList.Add(car);
+                        else if (car.Objective.IsCuttingWay(car.direction) && Parent.Objective.IsCuttingWay(Parent.direction))                         trashList.Add(car);
+                        else if ((car.RoadLight.state == RoadLightState.Red || car.RoadLight.state == RoadLightState.Orange) && car.IsBehindTheLine()) trashList.Add(car);
+                        break;
+                    case 1:
+                        if ((car.RoadLight.state == RoadLightState.Red || car.RoadLight.state == RoadLightState.Orange) && car.IsBehindTheLine())      trashList.Add(car);
+                        else if (car.Engine.RotationSpeed == 0 && !Parent.IsCarAlign(car.Shape) && 
+                                (Parent.Guid.CompareTo(car.Guid) > 0 || car.IsCarAlign(Parent.Shape)))                                                trashList.Add(car);
+                        else if (car.direction == Direction.down &&  car.Shape.Position.Y > (Parent.Shape.Position.Y + Parent.Shape.Size.Y))           trashList.Add(car);
+                        else if (car.direction == Direction.up &&    car.Shape.Position.Y + car.Shape.Size.Y < Parent.Shape.Position.Y)                trashList.Add(car);
+                        else if (car.direction == Direction.right && car.Shape.Position.X > (Parent.Shape.Position.X + Parent.Shape.Size.X))           trashList.Add(car);
+                        else if (car.direction == Direction.left &&  car.Shape.Position.X + car.Shape.Size.X < Parent.Shape.Position.X)                trashList.Add(car);
+                        break;
+                    case 2: if (Parent.Engine.RotationSpeed <= car.Engine.RotationSpeed && GetDistance(car.Shape) > Parent.SecurityDistance)           trashList.Add(car); 
+                        break;
                 }
             }
             return trashList;
@@ -155,17 +140,24 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                 case CarState.Decelerate:
 
                     if (Parent.Engine.DowngradeTest()) Parent.DowngradeCore();
+
                     if (target.Item1 as Car != null)
-                    {
-                        if (Parent.Engine.BoxSpeed == Engine.Speed.Back) Parent.MoveForward();
-                        else Parent.SlowDown(GetSlowStrengthCar(target.Item1 as Car));
-                    }
+                        if (Parent.Engine.BoxSpeed == Engine.Speed.Back)
+
+                            Parent.MoveForward();
+
+                        else
+                            Parent.SlowDown(GetSlowStrengthCar(target.Item1 as Car));
+
                     else if (target.Item1 as RoadLight != null)
-                    {
-                        if (Parent.Engine.BoxSpeed == Engine.Speed.Back) Parent.MoveForward();
-                        else Parent.SlowDown(GetSlowStrengthStopLine(target.Item1 as RoadLight));
-                    }
-                    else { throw new ArgumentNullException(); }
+                        if (Parent.Engine.BoxSpeed == Engine.Speed.Back)
+
+                            Parent.MoveForward();
+                        else
+                            Parent.SlowDown(GetSlowStrengthStopLine(target.Item1 as RoadLight));
+
+                    else throw new ArgumentNullException();
+
                     break;
 
                 case CarState.Turning:
@@ -203,30 +195,43 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
         private void AffectStatus(GameObject target)
         {
             if (target == null)
-            {
-                if (Parent.Objective.IsObjectiveCarable(Parent.direction)) Parent.status = CarState.Turning;
-                else Parent.status = CarState.Go;
-            }
-            else if ((target as Car) != null && GetDistance((target as Car).Shape) < Parent.SecurityDistance)
-            {
                 if (Parent.Objective.IsObjectiveCarable(Parent.direction) && 
-                    GetDistance(Parent.Objective.TurningZone) < GetDistance((target as Car).Shape))
-                     Parent.status = CarState.Turning;
-                else Parent.status = CarState.Decelerate;
-            }
-            else
-            {
-                if (Parent.Objective.IsObjectiveCarable(Parent.direction) && 
-                   ((target as RoadLight) != null && GetDistance(Parent.Objective.TurningZone) < GetDistance((target as RoadLight).StopLine) ||
-                    (target as Car) != null       && GetDistance(Parent.Objective.TurningZone) < GetDistance((target as Car).Shape)))
-                     Parent.status = CarState.Turning;
-                else Parent.status = CarState.Decelerate;
-            }
+                    Parent.Objective.IsInTurningZone(Parent.Shape))
+
+                    Parent.status = CarState.Turning;
+                else
+                    Parent.status = CarState.Go;
+
+            else if ((target as Car) != null)
+                if (Parent.Objective.IsObjectiveCarable(Parent.direction) &&
+                    Parent.Objective.IsInTurningZone(Parent.Shape) &&
+                  !(GetDistance((target as Car).Shape) < Parent.SecurityDistance))
+
+                    Parent.status = CarState.Turning;
+
+                else
+                    Parent.status = CarState.Decelerate;
+
+            else if ((target as RoadLight) != null)
+                if (Parent.Objective.IsObjectiveCarable(Parent.direction) &&
+                    Parent.Objective.IsInTurningZone(Parent.Shape))
+
+                    Parent.status = CarState.Turning;
+
+                else if (Parent.IsBehindTheLine())
+
+                    Parent.status = CarState.Decelerate;
+
+                else
+                    Parent.status = CarState.Go;
+
+            else throw new NotImplementedException();
         }
 
         private void AffectStatusDefault(GameObject target)
         {
-            if (target == null)
+            if (target == null || 
+               ((target as Car) != null && !Parent.IsCarAlign((target as Car).Shape)))
             {
                 Parent.status = CarState.Go;
             }
