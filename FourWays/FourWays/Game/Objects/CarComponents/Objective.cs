@@ -21,7 +21,7 @@ namespace FourWays.Game.Objects.CarComponents
         internal Direction Direction;
         internal RectangleShape TurningZone;
 
-        public Objective(Direction direction, uint WindowWidth, uint WindowHeight)
+        public Objective(Car car, uint WindowWidth, uint WindowHeight)
         {
             Random random = new Random();
             int i;
@@ -29,9 +29,15 @@ namespace FourWays.Game.Objects.CarComponents
             do {
                 i = random.Next(4);
                 Direction = (Direction)i;
+                AffectTurningZone(WindowWidth, WindowHeight);
             }
-            while (!IsObjectiveReachable(direction));
+            while (!IsObjectiveReachable(car));
 
+            AffectTurningZone(WindowWidth, WindowHeight);
+        }
+
+        private void AffectTurningZone(uint WindowWidth, uint WindowHeight)
+        {
             switch (Direction)
             {
                 case Direction.left:
@@ -84,17 +90,33 @@ namespace FourWays.Game.Objects.CarComponents
             car.Shape = rectangleShape;
         }
 
-        internal bool IsObjectiveReachable(Direction direction)
+        internal bool IsObjectiveReachable(Car car)
+        {
+            return !IsDirectionInvert(car.direction) && !IsTurningZonePassed(car);
+        }
+        private bool IsDirectionInvert(Direction direction)
         {
             return Direction switch
             {
-                Direction.left => direction != Direction.right,
-                Direction.right => direction != Direction.left,
-                Direction.up => direction != Direction.down,
-                Direction.down => direction != Direction.up,
+                Direction.left => direction == Direction.right,
+                Direction.right => direction == Direction.left,
+                Direction.up => direction == Direction.down,
+                Direction.down => direction == Direction.up,
                 _ => throw new NotImplementedException()
             };
         }
+        private bool IsTurningZonePassed(Car car)
+        {
+            return car.originalDirection switch
+            {
+                Direction.left => car.Shape.Position.X < TurningZone.Position.X,
+                Direction.right => car.Shape.Position.X + car.Shape.Size.X > TurningZone.Position.X + TurningZone.Size.X,
+                Direction.up => car.Shape.Position.Y < TurningZone.Position.Y,
+                Direction.down => car.Shape.Position.Y + car.Shape.Size.Y > TurningZone.Position.Y + TurningZone.Size.Y,
+                _ => throw new NotImplementedException()
+            };
+        }
+
         private bool IsTurningLeft(Direction direction)
         {
             return direction switch
@@ -121,7 +143,7 @@ namespace FourWays.Game.Objects.CarComponents
             }
         }
         internal bool IsObjectiveReached(Direction direction) => Direction == direction;
-        internal bool IsObjectiveCarable(Direction direction) => !IsObjectiveReached(direction) && IsObjectiveReachable(direction);
-        internal bool IsCuttingWay(Direction direction) => IsObjectiveCarable(direction) && IsTurningLeft(direction);
+        internal bool IsObjectiveCarable(Car car) => !IsObjectiveReached(car.direction) && IsObjectiveReachable(car);
+        internal bool IsCuttingWay(Car car) => IsObjectiveCarable(car) && IsTurningLeft(car.direction);
     }
 }

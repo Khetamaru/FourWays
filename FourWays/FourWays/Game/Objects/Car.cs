@@ -92,7 +92,7 @@ namespace FourWays.Game.Objects
             }
             Engine = new Engine(Engine.Speed.Three, arial);
             Driver = new Driver(this);
-            Objective = new Objective(direction, WindowWidth, WindowHeight);
+            Objective = new Objective(this, WindowWidth, WindowHeight);
             Limitor = 3;
         }
 

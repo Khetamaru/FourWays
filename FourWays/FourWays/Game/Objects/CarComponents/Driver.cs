@@ -72,16 +72,16 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                 switch (vector)
                 {
                     case 0:
-                        if (!Parent.Objective.IsObjectiveCarable(Parent.direction))                                                                    trashList.Add(car);
-                        else if (!Parent.Objective.IsCuttingWay(Parent.direction))                                                                     trashList.Add(car);
-                        else if (Parent.IsBehindTheLine() && !car.Objective.IsObjectiveCarable(car.direction))                                         trashList.Add(car);
-                        else if (car.Objective.IsCuttingWay(car.direction) && Parent.Objective.IsCuttingWay(Parent.direction))                         trashList.Add(car);
+                        if (!Parent.Objective.IsObjectiveCarable(Parent))                                                                              trashList.Add(car);
+                        else if (!Parent.Objective.IsCuttingWay(Parent))                                                                               trashList.Add(car);
+                        else if (Parent.IsBehindTheLine() && !car.Objective.IsObjectiveCarable(car))                                                   trashList.Add(car);
+                        else if (car.Objective.IsCuttingWay(car) && Parent.Objective.IsCuttingWay(Parent))                                             trashList.Add(car);
                         else if ((car.RoadLight.state == RoadLightState.Red || car.RoadLight.state == RoadLightState.Orange) && car.IsBehindTheLine()) trashList.Add(car);
                         break;
                     case 1:
                         if ((car.RoadLight.state == RoadLightState.Red || car.RoadLight.state == RoadLightState.Orange) && car.IsBehindTheLine())      trashList.Add(car);
                         else if (car.Engine.RotationSpeed == 0 && !Parent.IsCarAlign(car.Shape) && 
-                                (Parent.Guid.CompareTo(car.Guid) > 0 || car.IsCarAlign(Parent.Shape)))                                                trashList.Add(car);
+                                (Parent.Guid.CompareTo(car.Guid) > 0 || car.IsCarAlign(Parent.Shape)))                                                 trashList.Add(car);
                         else if (car.direction == Direction.down &&  car.Shape.Position.Y > (Parent.Shape.Position.Y + Parent.Shape.Size.Y))           trashList.Add(car);
                         else if (car.direction == Direction.up &&    car.Shape.Position.Y + car.Shape.Size.Y < Parent.Shape.Position.Y)                trashList.Add(car);
                         else if (car.direction == Direction.right && car.Shape.Position.X > (Parent.Shape.Position.X + Parent.Shape.Size.X))           trashList.Add(car);
@@ -195,7 +195,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
         private void AffectStatus(GameObject target)
         {
             if (target == null)
-                if (Parent.Objective.IsObjectiveCarable(Parent.direction) && 
+                if (Parent.Objective.IsObjectiveCarable(Parent) && 
                     Parent.Objective.IsInTurningZone(Parent.Shape))
 
                     Parent.status = CarState.Turning;
@@ -203,9 +203,9 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                     Parent.status = CarState.Go;
 
             else if ((target as Car) != null)
-                if (Parent.Objective.IsObjectiveCarable(Parent.direction) &&
+                if (Parent.Objective.IsObjectiveCarable(Parent) &&
                     Parent.Objective.IsInTurningZone(Parent.Shape) &&
-                  !(GetDistance((target as Car).Shape) < Parent.SecurityDistance))
+                  (!(GetDistance((target as Car).Shape) < Parent.SecurityDistance) || Parent.IsCarAlign((target as Car).Shape)))
 
                     Parent.status = CarState.Turning;
 
@@ -213,7 +213,7 @@ namespace FourWays.Game.Objects.CarFactory.CarComponents
                     Parent.status = CarState.Decelerate;
 
             else if ((target as RoadLight) != null)
-                if (Parent.Objective.IsObjectiveCarable(Parent.direction) &&
+                if (Parent.Objective.IsObjectiveCarable(Parent) &&
                     Parent.Objective.IsInTurningZone(Parent.Shape))
 
                     Parent.status = CarState.Turning;
