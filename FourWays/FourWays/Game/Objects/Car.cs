@@ -1,10 +1,11 @@
 ﻿using FourWays.Game.Objects.CarComponents;
 using FourWays.Game.Objects.CarFactory.CarComponents;
+using FourWays.Game.Objects.Graphs;
 using SFML.Graphics;
 using SFML.System;
-using SFML.Window;
 using System;
 using System.Collections.Generic;
+using static FourWays.Game.Objects.Graphs.DeathGraph;
 
 namespace FourWays.Game.Objects
 {
@@ -49,8 +50,11 @@ namespace FourWays.Game.Objects
         internal Engine Engine;
         internal Driver Driver;
         internal Objective Objective;
+        internal int Limitor;
 
-        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Dictionary<Direction, Texture> texture, Font arial)
+        internal DeathColor Color;
+
+        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Dictionary<Direction, Texture> texture, Font arial, DeathColor Color)
         {
             Guid = Guid.NewGuid();
             Arial = arial;
@@ -92,7 +96,9 @@ namespace FourWays.Game.Objects
             }
             Engine = new Engine(Engine.Speed.Three, arial);
             Driver = new Driver(this);
-            Objective = new Objective(direction, WindowWidth, WindowHeight);
+            Objective = new Objective(this, WindowWidth, WindowHeight);
+            Limitor = 3;
+            this.Color = Color;
         }
 
         private void AssignMove(Direction direction)
@@ -124,7 +130,7 @@ namespace FourWays.Game.Objects
 
         internal void MoveForward()
         {
-            SpeedUp();
+            if (!LimitorTrigger()) SpeedUp();
             Move();
         }
 
@@ -169,7 +175,8 @@ namespace FourWays.Game.Objects
             if (textureTemp != null) Shape.Texture = textureTemp;
         }
 
-        internal bool AbleToTurn() => !CollisionAfterTurning() && Objective.IsInTurningZone(Shape);
+        private bool LimitorTrigger() => IsBehindTheLine() && (int)Engine.BoxSpeed >= Limitor;
+        internal bool AbleToTurn() => Objective.IsInTurningZone(Shape) && !CollisionAfterTurning();
 
         private bool CollisionAfterTurning()
         {
@@ -177,33 +184,65 @@ namespace FourWays.Game.Objects
 
             shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y);
 
-            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
+            Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial, DeathGraph.DeathColor.red);
             car.Guid = Guid;
             car.Shape = shape;
+            car.Objective = Objective;
             car.Turn(Objective.Direction);
 
-            return CollideTest.Invoke(car).Count > 0;
+            Car NeerestCar = Driver.AnalyseCarsSeen(LookCars());
+
+            return CollideTest.Invoke(car).Count > 0 || 
+                  (NeerestCar != null && 
+                   Driver.GetDistance(NeerestCar.Shape) <= NeerestCar.SecurityDistance);
         }
 
-        internal List<Car> LookCars(bool front)
+        private RectangleShape GenerateShade()
         {
             float multiplier = (float)Engine.RotationSpeed * 2;
 
-            float distanceX = front ? (move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * move.X : (-move.X < 0 ? Shape.Size.X * multiplier : Shape.Size.X) * -move.X;
-            float distanceY = front ? (move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * move.Y : (-move.Y < 0 ? Shape.Size.Y * multiplier : Shape.Size.Y) * -move.Y;
+            RectangleShape shape = new RectangleShape(new Vector2f(Math.Max(Shape.Size.X, Shape.Size.Y) * (multiplier < 1 ? 1 : multiplier), Math.Max(Shape.Size.X, Shape.Size.Y) * (multiplier < 1 ? 1 : multiplier)));
 
-            float recenterX = multiplier / 2 * Math.Abs(move.Y);
-            float recenterY = multiplier / 2 * Math.Abs(move.X);
+            float diffX = (shape.Size.X / 2) - (Shape.Size.X / 2);
+            float diffY = (shape.Size.Y / 2) - (Shape.Size.Y / 2);
 
-            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X * multiplier, Shape.Size.Y * multiplier));
+            switch (direction)
+            {
+                case Direction.left:
+                    shape.Position = new Vector2f(Shape.Position.X + -shape.Size.X, Shape.Position.Y - diffY);
+                    break;
+                case Direction.right:
+                    shape.Position = new Vector2f(Shape.Position.X + Shape.Size.X, Shape.Position.Y - diffY);
+                    break;
+                case Direction.up:
+                    shape.Position = new Vector2f(Shape.Position.X - diffX, Shape.Position.Y + -shape.Size.Y);
+                    break;
+                case Direction.down:
+                    shape.Position = new Vector2f(Shape.Position.X - diffX, Shape.Position.Y + Shape.Size.Y);
+                    break;
+            }
 
-            shape.Position = new Vector2f(Shape.Position.X + distanceX - recenterX, Shape.Position.Y + (distanceY) - recenterY);
+            return shape;
+        }
 
-            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial);
+        internal List<Car> LookCars()
+        {
+            RectangleShape shape = GenerateShade();
+
+            Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial, DeathColor.red);
             car.Guid = Guid;
             car.Shape = shape;
 
             return CollideTest.Invoke(car);
+        }
+
+        internal RectangleShape ShowShade()
+        {
+            RectangleShape shape = GenerateShade();
+
+            shape.FillColor = SFML.Graphics.Color.Yellow;
+
+            return shape;
         }
 
         internal bool isColliding(Car car)
@@ -215,21 +254,17 @@ namespace FourWays.Game.Objects
             return false;
         }
 
-        internal bool isBeforeTheStopLine()
+        internal bool IsCarAlign(RectangleShape shape)
         {
-            switch (direction)
-            {
-                case Direction.left: return Shape.Position.X >= RoadLight.StopLine.Position.X;
-                case Direction.right: return Shape.Position.X + Shape.Size.X <= RoadLight.StopLine.Position.X;
-                case Direction.up: return Shape.Position.Y >= RoadLight.StopLine.Position.Y;
-                case Direction.down: return Shape.Position.Y + Shape.Size.Y <= RoadLight.StopLine.Position.Y;
-            }
-            return true;
+            RectangleShape Shape = new RectangleShape(this.Shape);
+            Shape.Position = new Vector2f(this.Shape.Position.X + (this.Shape.Size.X * move.X), this.Shape.Position.Y + (this.Shape.Size.Y * move.Y));
+
+            return Shape.GetGlobalBounds().Intersects(shape.GetGlobalBounds());
         }
 
         internal RoadLight LookAtRoadLights()
         {
-            return (isBeforeTheStopLine() && (RoadLight.state == RoadLightState.Red || RoadLight.state == RoadLightState.Orange)) ? RoadLight : null;
+            return (IsBehindTheLine() && (RoadLight.state == RoadLightState.Red || RoadLight.state == RoadLightState.Orange)) ? RoadLight : null;
         }
 
         internal bool isOutOfBounds()
@@ -249,12 +284,12 @@ namespace FourWays.Game.Objects
 
         internal bool IsBehindTheLine()
         {
-            return direction switch
+            return originalDirection switch
             {
                 Direction.left => RoadLight.StopLine.Position.X < Shape.Position.X,
-                Direction.right => RoadLight.StopLine.Position.X > Shape.Position.X,
+                Direction.right => RoadLight.StopLine.Position.X > Shape.Position.X + Shape.Size.X,
                 Direction.up => RoadLight.StopLine.Position.Y < Shape.Position.Y,
-                Direction.down => RoadLight.StopLine.Position.Y > Shape.Position.Y,
+                Direction.down => RoadLight.StopLine.Position.Y > Shape.Position.Y + Shape.Size.Y,
                 _ => false
             };
         }
@@ -272,7 +307,6 @@ namespace FourWays.Game.Objects
     {
         Go,
         Decelerate,
-        Turning,
-        BackForward
+        Turning
     }
 }

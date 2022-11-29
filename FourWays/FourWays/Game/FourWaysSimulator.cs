@@ -1,4 +1,5 @@
 ﻿using FourWays.Game.Objects;
+using FourWays.Game.Objects.Graphs;
 using FourWays.Game.Objects.ObjectFactory;
 using FourWays.Loop;
 using SFML.Graphics;
@@ -18,14 +19,22 @@ namespace FourWays.Game
         private const string WINDOW_TITLE = "Four Ways";
 
         private const uint CAR_NUMBER_LIMIT = 8;
-        internal uint DEATH_COUNTER = 0;
 
-        private const bool TEST_ON = false;
+        private const GAME_MODE TEST_ON = GAME_MODE.DEFAULT;
+        private enum GAME_MODE
+        {
+            DEFAULT,
+            TEST_MODE_1,
+            TEST_MODE_2
+        }
 
         private bool RENDER_SPEED;
         private bool RENDER_OBJECTIVE;
         private bool RENDER_STOP_LINE;
         private bool RENDER_TURNING_ZONE;
+        private bool RENDER_SHADE;
+
+        internal GraphCenter GraphCenter;
 
         private List<RectangleShape> roadBounds;
 
@@ -40,6 +49,8 @@ namespace FourWays.Game
         {
             Arial = new Font("./fonts/arial.ttf");
 
+            GraphCenter = new GraphCenter(this, new Vector2f(DEFAULT_WINDOW_WIDTH, 15f), Color.Cyan);
+
             CarFactory = new CarFactory(CollideTest, CollideTestSecurity, Arial);
             RoadBoundFactory = new RoadBoundFactory();
             RoadLightFactory = new RoadLightFactory();
@@ -49,25 +60,40 @@ namespace FourWays.Game
 
         private void TestMode()
         {
-            if (TEST_ON)
+            switch (TEST_ON)
             {
-                RENDER_SPEED = true;
-                RENDER_OBJECTIVE = false;
-                RENDER_STOP_LINE = true;
-                RENDER_TURNING_ZONE = true;
-            }
-            else
-            {
-                RENDER_SPEED = false;
-                RENDER_OBJECTIVE = true;
-                RENDER_STOP_LINE = false;
-                RENDER_TURNING_ZONE = false;
+                case GAME_MODE.DEFAULT:
+
+                    RENDER_SPEED = false;
+                    RENDER_OBJECTIVE = false;
+                    RENDER_STOP_LINE = false;
+                    RENDER_TURNING_ZONE = false;
+                    RENDER_SHADE = false;
+                    break;
+
+                case GAME_MODE.TEST_MODE_1:
+
+                    RENDER_SPEED = true;
+                    RENDER_OBJECTIVE = false;
+                    RENDER_STOP_LINE = true;
+                    RENDER_TURNING_ZONE = false;
+                    RENDER_SHADE = false;
+                    break;
+
+                case GAME_MODE.TEST_MODE_2:
+
+                    RENDER_SPEED = false;
+                    RENDER_OBJECTIVE = true;
+                    RENDER_STOP_LINE = false;
+                    RENDER_TURNING_ZONE = false;
+                    RENDER_SHADE = true;
+                    break;
             }
         }
 
         internal override void LoadContent()
         {
-            DebugUtility.LoadContent();
+            GraphCenter.LoadContent();
 
             CarFactory.LoadContent();
             RoadBoundFactory.LoadContent();
@@ -121,10 +147,10 @@ namespace FourWays.Game
 
             roadLights.TryGetValue(Direction.left, out RoadLight temp);
 
-            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
-            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
-            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
-            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
+            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
+            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
+            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
 
             foreach (Car car in TestList)
             {
@@ -161,11 +187,14 @@ namespace FourWays.Game
                                 {
                                     try
                                     {
-                                        Console.WriteLine("Car " + car.Guid.ToString() + " collide !");
+                                        Console.WriteLine(Math.Round(Time.FromSeconds(GameTime.TotalTimeElapsed).AsSeconds() / 60, 0, MidpointRounding.ToNegativeInfinity) +
+                                         "m:" +
+                                         Math.Round(Time.FromSeconds(GameTime.TotalTimeElapsed).AsSeconds() % 60, 0) +
+                                         "s" + " Car " + car.Guid.ToString() + " collide !");
 
                                         trashList.Add(car);
                                         trashList.Add(car2);
-                                        DEATH_COUNTER++;
+                                        GraphCenter.DeathIncrement(car.Color);
                                     }
                                     catch { }
                                 }
@@ -185,7 +214,7 @@ namespace FourWays.Game
             {
                 foreach (Car car in carList.Value)
                 {
-                    if (car.isColliding(carTest))
+                    if (car.isColliding(carTest) && car.Guid != carTest.Guid)
                     {
                         carsSeen.Add(car);
                     }
@@ -219,7 +248,11 @@ namespace FourWays.Game
                 {
                     if (car.isOutOfBounds())
                     {
-                        try { trashList.Add(car); }
+                        try 
+                        { 
+                            trashList.Add(car);
+                            GraphCenter.SucessIncrement(car);
+                        }
                         catch { }
                     }
                 }
@@ -263,7 +296,7 @@ namespace FourWays.Game
             DrawRoadLights();
             DrawCars();
 
-            DebugUtility.DrawPerformanceData(this, Color.White);
+            GraphCenter.DrawGraphs();
         }
 
         private void DrawBackGround()
@@ -276,6 +309,7 @@ namespace FourWays.Game
 
         private void DrawCars()
         {
+            bool trigger = false;
             foreach (KeyValuePair<Direction, List<Car>> carList in cars)
             {
                 foreach (Car car in carList.Value)
@@ -300,6 +334,11 @@ namespace FourWays.Game
                         objectiveText.Position = new Vector2f(car.Shape.Position.X + 10f, car.Shape.Position.Y + 10f);
 
                         Window.Draw(objectiveText);
+                    }
+                    if (RENDER_SHADE && !trigger)
+                    {
+                        Window.Draw(car.ShowShade());
+                        trigger = true;
                     }
                 }
             }
