@@ -44,8 +44,10 @@ namespace FourWays.Game.Objects.Graphs
 
         private static void DrawPerformanceDataInfos(GameLoop gameLoop, Color fontColor)
         {
-            string totalTimeElapsedStr = (Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() / 60, 0, MidpointRounding.ToNegativeInfinity) +
-                                         "m:" +
+            string totalTimeElapsedStr = (Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() / 60 / 60, 0, MidpointRounding.ToNegativeInfinity) +
+                                         "h " +
+                                         (Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() / 60, 0, MidpointRounding.ToNegativeInfinity)) % 60 +
+                                         "m " +
                                          Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() % 60, 0) +
                                          "s")
                                          .ToString();

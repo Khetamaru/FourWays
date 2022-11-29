@@ -11,10 +11,7 @@
 
         internal float TotalTimeElapsed { get; private set; }
 
-        public GameTime()
-        {
-
-        }
+        public GameTime(){}
 
         internal void Update(float deltaTime, float totalTimeElapsed)
         {

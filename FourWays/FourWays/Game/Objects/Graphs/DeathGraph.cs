@@ -16,15 +16,21 @@ namespace FourWays.Game.Objects.Graphs
 
         internal GameLoop Parent;
         internal Vector2f Position;
+        internal Vector2f Size;
         internal Color FontColor;
 
         internal int[] DeathCounters;
 
         public enum DeathColor
         {
-            Red,
-            Blue,
-            Green
+            red,
+            blue,
+            green,
+            grey,
+            purple,
+            yellow,
+            pink,
+            white
         }
 
         public DeathGraph(GameLoop parent, Vector2f position, Color fontColor)
@@ -34,7 +40,9 @@ namespace FourWays.Game.Objects.Graphs
             FontColor = fontColor;
 
             InitDeathCounters();
+
             Position = new Vector2f(position.X - 50 * DeathCounters.Length - 25, position.Y);
+            Size = new Vector2f(50 * DeathCounters.Length + 30f, 310f);
         }
 
         private void InitDeathCounters()
@@ -61,47 +69,42 @@ namespace FourWays.Game.Objects.Graphs
 
                 j++;
             }
+            DrawDeathPerSecond();
         }
 
         private void DrawBackground()
         {
             DrawTitleBackground();
             DrawGraphBackground();
+            DrawDeathPerSecondBackground();
         }
 
         private void DrawTitleBackground()
         {
             RectangleShape background = new RectangleShape(new Vector2f(50 * DeathCounters.Length + 10f, 30f));
             background.Position = new Vector2f(Position.X - 5f, Position.Y - 5f);
-            background.FillColor = Color.Black;
 
-            RectangleShape backgroundBorderX = new RectangleShape(new Vector2f(background.Size.X + 5f, 5f));
-            backgroundBorderX.Position = new Vector2f(background.Position.X, background.Position.Y + background.Size.Y);
-            backgroundBorderX.FillColor = Color.White;
-
-            RectangleShape backgroundBorderY = new RectangleShape(new Vector2f(5f, background.Size.Y + 5f));
-            backgroundBorderY.Position = new Vector2f(background.Position.X + background.Size.X, background.Position.Y);
-            backgroundBorderY.FillColor = Color.White;
-
-            RectangleShape backgroundBorderXN = new RectangleShape(new Vector2f(background.Size.X + 10f, 5f));
-            backgroundBorderXN.Position = new Vector2f(background.Position.X - 5f, background.Position.Y - 5f);
-            backgroundBorderXN.FillColor = Color.White;
-
-            RectangleShape backgroundBorderYN = new RectangleShape(new Vector2f(5f, background.Size.Y + 10f));
-            backgroundBorderYN.Position = new Vector2f(background.Position.X - 5f, background.Position.Y - 5f);
-            backgroundBorderYN.FillColor = Color.White;
-
-            Parent.Window.Draw(backgroundBorderX);
-            Parent.Window.Draw(backgroundBorderY);
-            Parent.Window.Draw(backgroundBorderXN);
-            Parent.Window.Draw(backgroundBorderYN);
-            Parent.Window.Draw(background);
+            DrawBorder(background);
         }
 
         private void DrawGraphBackground()
         {
-            RectangleShape background = new RectangleShape(new Vector2f(50 * DeathCounters.Length + 10f, 250f));
+            RectangleShape background = new RectangleShape(new Vector2f(50 * DeathCounters.Length + 10f, 255f));
             background.Position = new Vector2f(Position.X - 5f, Position.Y - 5f + 30f);
+
+            DrawBorder(background);
+        }
+
+        private void DrawDeathPerSecondBackground()
+        {
+            RectangleShape background = new RectangleShape(new Vector2f(50 * DeathCounters.Length + 10f, 30f));
+            background.Position = new Vector2f(Position.X - 5f, Position.Y - 5f + 285f);
+
+            DrawBorder(background);
+        }
+
+        private void DrawBorder(RectangleShape background)
+        {
             background.FillColor = Color.Black;
 
             RectangleShape backgroundBorderX = new RectangleShape(new Vector2f(background.Size.X + 5f, 5f));
@@ -149,7 +152,7 @@ namespace FourWays.Game.Objects.Graphs
 
         private void DrawGraph(int i, int index)
         {
-            int sizeY = DeathTotal() > 0 ? i / DeathTotal() * 200 : 0;
+            int sizeY = DeathTotal() > 0 ? int.Parse(Math.Round((double)i / DeathTotal() * 200, 0).ToString()) : 0;
 
             RectangleShape column = new RectangleShape(new Vector2f(30f, sizeY));
             column.Position = new Vector2f(Position.X + (50 * index), Position.Y + 20f + 30f);
@@ -160,10 +163,19 @@ namespace FourWays.Game.Objects.Graphs
 
         private void DrawPercentage(int i, int index)
         {
-            int sizeY = DeathTotal() > 0 ? i / DeathTotal() * 200 : 0;
+            int sizeY = DeathTotal() > 0 ? int.Parse(Math.Round((double)i / DeathTotal() * 200, 0).ToString()) : 0;
 
             Text text = new Text(sizeY/2 + "%", ConsoleFont, 14);
             text.Position = new Vector2f(Position.X + (50 * index), Position.Y + sizeY + 25f + 30f);
+            text.FillColor = FontColor;
+
+            Parent.Window.Draw(text);
+        }
+
+        private void DrawDeathPerSecond()
+        {
+            Text text = new Text("Min / Death : " + Math.Round((DeathTotal() > 0 ? (Parent.GameTime.TotalTimeElapsed/60)/(DeathTotal()/2) : 0),2), ConsoleFont, 14);
+            text.Position = new Vector2f(Position.X, Position.Y + 285f);
             text.FillColor = FontColor;
 
             Parent.Window.Draw(text);
@@ -173,9 +185,14 @@ namespace FourWays.Game.Objects.Graphs
         {
             return i switch
             {
-                DeathColor.Red => Color.Red,
-                DeathColor.Blue => Color.Blue,
-                DeathColor.Green => Color.Green,
+                DeathColor.red => Color.Red,
+                DeathColor.blue => Color.Blue,
+                DeathColor.green => Color.Green,
+                DeathColor.pink => Color.Magenta,
+                DeathColor.purple => Color.Magenta,
+                DeathColor.white => Color.White,
+                DeathColor.grey => Color.White,
+                DeathColor.yellow => Color.Yellow,
                 _ => Color.White
             };
         }

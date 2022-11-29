@@ -20,7 +20,7 @@ namespace FourWays.Game
 
         private const uint CAR_NUMBER_LIMIT = 8;
 
-        private const GAME_MODE TEST_ON = GAME_MODE.TEST_MODE_2;
+        private const GAME_MODE TEST_ON = GAME_MODE.DEFAULT;
         private enum GAME_MODE
         {
             DEFAULT,
@@ -34,7 +34,7 @@ namespace FourWays.Game
         private bool RENDER_TURNING_ZONE;
         private bool RENDER_SHADE;
 
-        internal DeathGraph DeathGraph;
+        internal GraphCenter GraphCenter;
 
         private List<RectangleShape> roadBounds;
 
@@ -49,7 +49,7 @@ namespace FourWays.Game
         {
             Arial = new Font("./fonts/arial.ttf");
 
-            DeathGraph = new DeathGraph(this, new Vector2f(DEFAULT_WINDOW_WIDTH, 15f), Color.Cyan);
+            GraphCenter = new GraphCenter(this, new Vector2f(DEFAULT_WINDOW_WIDTH, 15f), Color.Cyan);
 
             CarFactory = new CarFactory(CollideTest, CollideTestSecurity, Arial);
             RoadBoundFactory = new RoadBoundFactory();
@@ -93,7 +93,7 @@ namespace FourWays.Game
 
         internal override void LoadContent()
         {
-            DebugUtility.LoadContent();
+            GraphCenter.LoadContent();
 
             CarFactory.LoadContent();
             RoadBoundFactory.LoadContent();
@@ -147,10 +147,10 @@ namespace FourWays.Game
 
             roadLights.TryGetValue(Direction.left, out RoadLight temp);
 
-            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
-            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
-            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
-            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial));
+            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
+            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
+            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
+            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
 
             foreach (Car car in TestList)
             {
@@ -194,7 +194,7 @@ namespace FourWays.Game
 
                                         trashList.Add(car);
                                         trashList.Add(car2);
-                                        DeathGraph.AddDeathCounter(DeathGraph.DeathColor.Red);
+                                        GraphCenter.DeathIncrement(car.Color);
                                     }
                                     catch { }
                                 }
@@ -248,7 +248,11 @@ namespace FourWays.Game
                 {
                     if (car.isOutOfBounds())
                     {
-                        try { trashList.Add(car); }
+                        try 
+                        { 
+                            trashList.Add(car);
+                            GraphCenter.SucessIncrement(car);
+                        }
                         catch { }
                     }
                 }
@@ -292,8 +296,7 @@ namespace FourWays.Game
             DrawRoadLights();
             DrawCars();
 
-            DebugUtility.DrawPerformanceData(this, Color.White);
-            DeathGraph.DrawDataTab();
+            GraphCenter.DrawGraphs();
         }
 
         private void DrawBackGround()
