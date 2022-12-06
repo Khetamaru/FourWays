@@ -17,38 +17,38 @@ namespace FourWays.Game.Objects.ObjectFactory
         internal Func<Car, List<Car>> CollideTest { get; }
         internal Func<Car, List<Car>> CollideTestSecurity { get; }
 
-        internal Dictionary<DeathColor, Dictionary<Direction, Texture>> Textures;
+        internal Dictionary<CarColor, Dictionary<Direction, Texture>> Textures;
 
-        internal Dictionary<DeathColor, int> ColorPondaration;
+        internal Dictionary<CarColor, int> ColorPondaration;
 
         public CarFactory(Func<Car, List<Car>> collideTest, Func<Car, List<Car>> collideTestSecurity, Font arial)
         {
             Arial = arial;
             CollideTest = collideTest;
             CollideTestSecurity = collideTestSecurity;
-            Textures = new Dictionary<DeathColor, Dictionary<Direction, Texture>>();
+            Textures = new Dictionary<CarColor, Dictionary<Direction, Texture>>();
 
             ColorPondarationInit();
         }
 
         private void ColorPondarationInit()
         {
-            ColorPondaration = new Dictionary<DeathColor, int>();
+            ColorPondaration = new Dictionary<CarColor, int>();
 
-            ColorPondaration.Add(DeathColor.red, RedCar.Ponderation);
-            ColorPondaration.Add(DeathColor.blue, BlueCar.Ponderation);
-            ColorPondaration.Add(DeathColor.green, GreenCar.Ponderation);
-            ColorPondaration.Add(DeathColor.white, WhiteCar.Ponderation);
-            ColorPondaration.Add(DeathColor.purple, PurpleCar.Ponderation);
-            ColorPondaration.Add(DeathColor.pink, PinkCar.Ponderation);
-            ColorPondaration.Add(DeathColor.yellow, YellowCar.Ponderation);
-            ColorPondaration.Add(DeathColor.grey, GreyCar.Ponderation);
+            ColorPondaration.Add(CarColor.red, RedCar.Ponderation);
+            ColorPondaration.Add(CarColor.blue, BlueCar.Ponderation);
+            ColorPondaration.Add(CarColor.green, GreenCar.Ponderation);
+            ColorPondaration.Add(CarColor.white, WhiteCar.Ponderation);
+            ColorPondaration.Add(CarColor.purple, PurpleCar.Ponderation);
+            ColorPondaration.Add(CarColor.pink, PinkCar.Ponderation);
+            ColorPondaration.Add(CarColor.yellow, YellowCar.Ponderation);
+            ColorPondaration.Add(CarColor.grey, GreyCar.Ponderation);
         }
 
         internal void LoadContent()
         {
             Dictionary<Direction, Texture> textures;
-            foreach (string colorString in Enum.GetNames(typeof(DeathColor)))
+            foreach (string colorString in Enum.GetNames(typeof(CarColor)))
             {
                 textures = new Dictionary<Direction, Texture>();
 
@@ -57,7 +57,7 @@ namespace FourWays.Game.Objects.ObjectFactory
                 textures.Add(Direction.up, new Texture(new Image("./Ressources/" + colorString + "_up.png")));
                 textures.Add(Direction.down, new Texture(new Image("./Ressources/" + colorString + "_down.png")));
 
-                Textures.Add((DeathColor)Enum.Parse(typeof(DeathColor), colorString), textures);
+                Textures.Add((CarColor)Enum.Parse(typeof(CarColor), colorString), textures);
             }
         }
 
@@ -86,27 +86,27 @@ namespace FourWays.Game.Objects.ObjectFactory
             Direction direction;
             RoadLight temp;
 
-            Texture texture = Textures.GetValueOrDefault(DeathColor.red).GetValueOrDefault(Direction.right);
+            Texture texture = Textures.GetValueOrDefault(CarColor.red).GetValueOrDefault(Direction.right);
             do
             {
                 direction = (Direction)Enum.GetValues(typeof(Direction)).GetValue(new Random().Next(4));
                 switch (direction)
                 {
                     case Direction.left:
-                        texture = Textures.GetValueOrDefault(DeathColor.red).GetValueOrDefault(Direction.left);
+                        texture = Textures.GetValueOrDefault(CarColor.red).GetValueOrDefault(Direction.left);
                         break;
                     case Direction.right:
-                        texture = Textures.GetValueOrDefault(DeathColor.red).GetValueOrDefault(Direction.right);
+                        texture = Textures.GetValueOrDefault(CarColor.red).GetValueOrDefault(Direction.right);
                         break;
                     case Direction.up:
-                        texture = Textures.GetValueOrDefault(DeathColor.red).GetValueOrDefault(Direction.up);
+                        texture = Textures.GetValueOrDefault(CarColor.red).GetValueOrDefault(Direction.up);
                         break;
                     case Direction.down:
-                        texture = Textures.GetValueOrDefault(DeathColor.red).GetValueOrDefault(Direction.down);
+                        texture = Textures.GetValueOrDefault(CarColor.red).GetValueOrDefault(Direction.down);
                         break;
                 }
                 roadLights.TryGetValue(Direction.left, out temp);
-                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, Textures.GetValueOrDefault(DeathColor.red), Arial, DeathColor.red);
+                car = new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, Textures.GetValueOrDefault(CarColor.red), Arial, CarColor.red);
             }
             while (CollideTestSecurity(car).Count > 0);
 
@@ -115,7 +115,7 @@ namespace FourWays.Game.Objects.ObjectFactory
 
         private Car PopACar(Dictionary<Direction, RoadLight> roadLights, Direction direction)
         {
-            DeathColor deathColor = GetAColor();
+            CarColor deathColor = GetAColor();
 
             roadLights.TryGetValue(direction, out RoadLight temp);
             Texture texture = Textures.GetValueOrDefault(deathColor).GetValueOrDefault(Direction.right);
@@ -137,20 +137,20 @@ namespace FourWays.Game.Objects.ObjectFactory
             return new Car(direction, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, Textures.GetValueOrDefault(deathColor), Arial, deathColor);
         }
 
-        private DeathColor GetAColor()
+        private CarColor GetAColor()
         {
             int size = 0;
 
-            foreach(KeyValuePair<DeathColor, int> keyValue in ColorPondaration)
+            foreach(KeyValuePair<CarColor, int> keyValue in ColorPondaration)
             {
                 size += keyValue.Value;
             }
 
-            DeathColor[] deathColors = new DeathColor[size];
+            CarColor[] deathColors = new CarColor[size];
             int i = 0;
             int j = 0;
 
-            foreach (KeyValuePair<DeathColor, int> keyValue in ColorPondaration)
+            foreach (KeyValuePair<CarColor, int> keyValue in ColorPondaration)
             {
                 while(j < keyValue.Value)
                 {
@@ -162,5 +162,33 @@ namespace FourWays.Game.Objects.ObjectFactory
             }
             return deathColors[new Random().Next(size)];
         }
+
+        public List<CarColor> ActiveColors()
+        {
+            List<CarColor> colors = new List<CarColor>();
+
+            if (RedCar.Ponderation > 0) colors.Add(CarColor.red);
+            if (BlueCar.Ponderation > 0) colors.Add(CarColor.blue);
+            if (GreenCar.Ponderation > 0) colors.Add(CarColor.green);
+            if (WhiteCar.Ponderation > 0) colors.Add(CarColor.white);
+            if (PurpleCar.Ponderation > 0) colors.Add(CarColor.purple);
+            if (PinkCar.Ponderation > 0) colors.Add(CarColor.pink);
+            if (GreyCar.Ponderation > 0) colors.Add(CarColor.grey);
+            if (YellowCar.Ponderation > 0) colors.Add(CarColor.yellow);
+
+            return colors;
+        }
+    }
+
+    public enum CarColor
+    {
+        red,
+        blue,
+        green,
+        grey,
+        purple,
+        yellow,
+        pink,
+        white
     }
 }

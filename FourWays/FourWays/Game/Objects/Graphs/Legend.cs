@@ -1,4 +1,5 @@
-﻿using FourWays.Loop;
+﻿using FourWays.Game.Objects.ObjectFactory;
+using FourWays.Loop;
 using SFML.Graphics;
 using SFML.System;
 using System;
@@ -21,7 +22,7 @@ namespace FourWays.Game.Objects.Graphs
             Parent = parent;
             FontColor = fontColor;
 
-            Size = new Vector2f(150, 25 * (Enum.GetNames(typeof(DeathGraph.DeathColor)).Length));
+            Size = new Vector2f(565, 25 * (Enum.GetNames(typeof(CarColor)).Length));
             Position = new Vector2f(position.X, position.Y);
         }
 
@@ -69,60 +70,60 @@ namespace FourWays.Game.Objects.Graphs
         private void DrawLines()
         {
             Text text;
-            for (int i = 0; i < Enum.GetNames(typeof(DeathGraph.DeathColor)).Length; i++)
+            for (int i = 0; i < Enum.GetNames(typeof(CarColor)).Length; i++)
             {
                 switch(i)
                 {
-                    case (int)DeathGraph.DeathColor.red:
+                    case (int)CarColor.red:
 
                         text = new Text("Red Car : Normal", ConsoleFont, 14);
                         text.Position = new Vector2f(Position.X, Position.Y + (25 * i));
                         text.FillColor = Color.Red;
                         Parent.Window.Draw(text);
                         break;
-                    case (int)DeathGraph.DeathColor.blue:
+                    case (int)CarColor.blue:
 
                         text = new Text("Blue Car : Normal", ConsoleFont, 14);
                         text.Position = new Vector2f(Position.X, Position.Y + (25 * i));
                         text.FillColor = Color.Cyan;
                         Parent.Window.Draw(text);
                         break;
-                    case (int)DeathGraph.DeathColor.green:
+                    case (int)CarColor.green:
 
                         text = new Text("Green Car : Normal", ConsoleFont, 14);
                         text.Position = new Vector2f(Position.X, Position.Y + (25 * i));
                         text.FillColor = Color.Green;
                         Parent.Window.Draw(text);
                         break;
-                    case (int)DeathGraph.DeathColor.grey:
+                    case (int)CarColor.grey:
 
                         text = new Text("Grey Car : Normal", ConsoleFont, 14);
                         text.Position = new Vector2f(Position.X, Position.Y + (25 * i));
                         text.FillColor = Color.White;
                         Parent.Window.Draw(text);
                         break;
-                    case (int)DeathGraph.DeathColor.pink:
+                    case (int)CarColor.pink:
 
                         text = new Text("Pink Car : Normal", ConsoleFont, 14);
                         text.Position = new Vector2f(Position.X, Position.Y + (25 * i));
                         text.FillColor = Color.Magenta;
                         Parent.Window.Draw(text);
                         break;
-                    case (int)DeathGraph.DeathColor.white:
+                    case (int)CarColor.white:
 
                         text = new Text("White Car : Normal", ConsoleFont, 14);
                         text.Position = new Vector2f(Position.X, Position.Y + (25 * i));
                         text.FillColor = Color.White;
                         Parent.Window.Draw(text);
                         break;
-                    case (int)DeathGraph.DeathColor.yellow:
+                    case (int)CarColor.yellow:
 
                         text = new Text("Yellow Car : Normal", ConsoleFont, 14);
                         text.Position = new Vector2f(Position.X, Position.Y + (25 * i));
                         text.FillColor = Color.Yellow;
                         Parent.Window.Draw(text);
                         break;
-                    case (int)DeathGraph.DeathColor.purple:
+                    case (int)CarColor.purple:
 
                         text = new Text("Purple Car : Normal", ConsoleFont, 14);
                         text.Position = new Vector2f(Position.X, Position.Y + (25 * i));

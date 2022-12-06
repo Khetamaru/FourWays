@@ -1,6 +1,8 @@
-﻿using FourWays.Game.Objects.CarComponents;
+﻿using FourWays.Game.Objects.CarChildren;
+using FourWays.Game.Objects.CarComponents;
 using FourWays.Game.Objects.CarFactory.CarComponents;
 using FourWays.Game.Objects.Graphs;
+using FourWays.Game.Objects.ObjectFactory;
 using SFML.Graphics;
 using SFML.System;
 using System;
@@ -52,9 +54,9 @@ namespace FourWays.Game.Objects
         internal Objective Objective;
         internal int Limitor;
 
-        internal DeathColor Color;
+        internal CarColor Color;
 
-        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Dictionary<Direction, Texture> texture, Font arial, DeathColor Color)
+        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Dictionary<Direction, Texture> texture, Font arial, CarColor Color)
         {
             Guid = Guid.NewGuid();
             Arial = arial;
@@ -184,7 +186,7 @@ namespace FourWays.Game.Objects
 
             shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y);
 
-            Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial, DeathGraph.DeathColor.red);
+            Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial, CarColor.red);
             car.Guid = Guid;
             car.Shape = shape;
             car.Objective = Objective;
@@ -229,7 +231,7 @@ namespace FourWays.Game.Objects
         {
             RectangleShape shape = GenerateShade();
 
-            Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial, DeathColor.red);
+            Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial, CarColor.red);
             car.Guid = Guid;
             car.Shape = shape;
 

@@ -1,4 +1,5 @@
-﻿using FourWays.Loop;
+﻿using FourWays.Game.Objects.ObjectFactory;
+using FourWays.Loop;
 using SFML.Graphics;
 using SFML.System;
 using System;
@@ -20,24 +21,14 @@ namespace FourWays.Game.Objects.Graphs
         internal Color FontColor;
 
         internal int[] DeathCounters;
+        List<CarColor> CarColors;
 
-        public enum DeathColor
-        {
-            red,
-            blue,
-            green,
-            grey,
-            purple,
-            yellow,
-            pink,
-            white
-        }
-
-        public DeathGraph(GameLoop parent, Vector2f position, Color fontColor)
+        public DeathGraph(GameLoop parent, Vector2f position, Color fontColor, List<CarColor> carColors)
         {
             ConsoleFont = new Font(CONSOLE_FONT_PATH);
             Parent = parent;
             FontColor = fontColor;
+            CarColors = carColors;
 
             InitDeathCounters();
 
@@ -47,13 +38,24 @@ namespace FourWays.Game.Objects.Graphs
 
         private void InitDeathCounters()
         {
-            DeathCounters = new int[Enum.GetNames(typeof(DeathColor)).Length];
+            DeathCounters = new int[CarColors.Count];
             for (int i = 0; i < DeathCounters.Length; i++) DeathCounters[i] = 0;
         }
 
-        internal void AddDeathCounter(DeathColor deathColor)
+        internal void AddDeathCounter(CarColor deathColor)
         {
-            DeathCounters[(int)deathColor]++;
+            DeathCounters[GetIndex(deathColor)]++;
+        }
+
+        private int GetIndex(CarColor deathColor)
+        {
+            int i = 0;
+            foreach(CarColor carColor in CarColors)
+            {
+                if (carColor == deathColor) return i;
+                i++;
+            }
+            return -1;
         }
 
         internal void DrawDataTab()
@@ -141,7 +143,7 @@ namespace FourWays.Game.Objects.Graphs
 
         private void DrawColorName(int index)
         {
-            DeathColor color = (DeathColor)index;
+            CarColor color = CarColors[index];
 
             Text text = new Text(color.ToString(), ConsoleFont, 14);
             text.Position = new Vector2f(Position.X + (50 * index), Position.Y + 30f);
@@ -156,7 +158,7 @@ namespace FourWays.Game.Objects.Graphs
 
             RectangleShape column = new RectangleShape(new Vector2f(30f, sizeY));
             column.Position = new Vector2f(Position.X + (50 * index), Position.Y + 20f + 30f);
-            column.FillColor = GetColor((DeathColor)index);
+            column.FillColor = GetColor(CarColors[index]);
 
             Parent.Window.Draw(column);
         }
@@ -181,18 +183,18 @@ namespace FourWays.Game.Objects.Graphs
             Parent.Window.Draw(text);
         }
 
-        private Color GetColor(DeathColor i)
+        private Color GetColor(CarColor i)
         {
             return i switch
             {
-                DeathColor.red => Color.Red,
-                DeathColor.blue => Color.Blue,
-                DeathColor.green => Color.Green,
-                DeathColor.pink => Color.Magenta,
-                DeathColor.purple => Color.Magenta,
-                DeathColor.white => Color.White,
-                DeathColor.grey => Color.White,
-                DeathColor.yellow => Color.Yellow,
+                CarColor.red => Color.Red,
+                CarColor.blue => Color.Blue,
+                CarColor.green => Color.Green,
+                CarColor.pink => Color.Magenta,
+                CarColor.purple => Color.Magenta,
+                CarColor.white => Color.White,
+                CarColor.grey => Color.White,
+                CarColor.yellow => Color.Yellow,
                 _ => Color.White
             };
         }

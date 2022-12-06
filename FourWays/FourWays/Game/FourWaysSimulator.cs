@@ -49,11 +49,11 @@ namespace FourWays.Game
         {
             Arial = new Font("./fonts/arial.ttf");
 
-            GraphCenter = new GraphCenter(this, new Vector2f(DEFAULT_WINDOW_WIDTH, 15f), Color.Cyan);
-
             CarFactory = new CarFactory(CollideTest, CollideTestSecurity, Arial);
             RoadBoundFactory = new RoadBoundFactory();
             RoadLightFactory = new RoadLightFactory();
+
+            GraphCenter = new GraphCenter(this, new Vector2f(DEFAULT_WINDOW_WIDTH, 15f), Color.Cyan, CarFactory.ActiveColors());
 
             TestMode();
         }
@@ -147,10 +147,10 @@ namespace FourWays.Game
 
             roadLights.TryGetValue(Direction.left, out RoadLight temp);
 
-            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
-            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
-            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
-            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, DeathGraph.DeathColor.red));
+            TestList.Add(new Car(Direction.down, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, CarColor.red));
+            TestList.Add(new Car(Direction.up, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, CarColor.red));
+            TestList.Add(new Car(Direction.left, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, CarColor.red));
+            TestList.Add(new Car(Direction.right, DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, temp, CollideTest, null, Arial, CarColor.red));
 
             foreach (Car car in TestList)
             {
@@ -194,7 +194,7 @@ namespace FourWays.Game
 
                                         trashList.Add(car);
                                         trashList.Add(car2);
-                                        GraphCenter.DeathIncrement(car.Color);
+                                        GraphCenter.DeathIncrement(car.Color, car2.Color);
                                     }
                                     catch { }
                                 }
