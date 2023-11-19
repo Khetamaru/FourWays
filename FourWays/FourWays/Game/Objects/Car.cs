@@ -1,66 +1,67 @@
-﻿using SFML.Graphics;
+﻿using FourWays.Game.Objects.CarChildren;
+using FourWays.Game.Objects.CarComponents;
+using FourWays.Game.Objects.CarFactory.CarComponents;
+using FourWays.Game.Objects.Graphs;
+using FourWays.Game.Objects.ObjectFactory;
+using SFML.Graphics;
 using SFML.System;
 using System;
+using System.Collections.Generic;
+using static FourWays.Game.Objects.Graphs.DeathGraph;
 
 namespace FourWays.Game.Objects
 {
     public class Car : GameObject
     {
+        private Font Arial;
+
         private uint WindowWidth;
         private uint WindowHeight;
 
-        private const float SecurityDistance = 5f;
-        private const float MaxSpeed = 6f;
         private const float CarFrontSize = 40f;
         private const float CarSideSize = 60f;
-        private const double AccuracyPourcentageStackValue = 0.002;
+        private Func<Car, List<Car>> CollideTest { get; }
+        internal Dictionary<Direction, Texture> Texture { get; }
 
-        Func<Car, bool> CollideTest { get; }
-        public Texture Texture { get; }
+        internal Guid Guid;
+        internal RectangleShape Shape;
+        internal RoadLight RoadLight { get; }
 
-        public Guid Guid;
-        public RectangleShape Shape { get; private set; }
-        private RoadLight RoadLight { get; }
-        private Color Color { get; set; }
-        private Direction actualDirection { get; set; }
-        private float ActualSpeed { get; set; }
-        private double AccuracyPourcentage { get; set; }
-        public Direction direction
+        private Direction actualDirection;
+
+        internal Direction originalDirection;
+        internal Direction direction
         {
-            get
-            {
-                return actualDirection;
-            }
+            get => actualDirection;
             private set
             {
                 actualDirection = value;
                 AssignMove(value);
             }
         }
-        public CarState ActualStatus { get; set; }
-        public CarState status 
+
+        internal CarState ActualStatus;
+        internal CarState status
         {
-            get
-            {
-                return ActualStatus;
-            }
-            set
-            {
-                ActualStatus = value;
-                if (value == CarState.Stop)
-                {
-                    Stop();
-                }
-            }
+            get => ActualStatus;
+            set => ActualStatus = value;
         }
 
-        private Vector2f move { get; set; }
+        internal Vector2f move;
 
-        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, bool> collideTest, Texture texture)
+        internal Engine Engine;
+        internal Driver Driver;
+        internal Objective Objective;
+        internal int Limitor;
+
+        internal CarColor Color;
+
+        public Car(Direction direction, uint WindowWidth, uint WindowHeight, RoadLight roadLight, Func<Car, List<Car>> collideTest, Dictionary<Direction, Texture> texture, Font arial, CarColor Color)
         {
             Guid = Guid.NewGuid();
-
+            Arial = arial;
             this.direction = direction;
+            originalDirection = direction;
             status = CarState.Go;
             this.WindowWidth = WindowWidth;
             this.WindowHeight = WindowHeight;
@@ -68,254 +69,182 @@ namespace FourWays.Game.Objects
             CollideTest = collideTest;
             Texture = texture;
 
-            ActualSpeed = 0f;
-            AccuracyPourcentage = 1.0;
-
-            Color = Color.Red;
             switch (direction)
             {
                 case Direction.down:
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
-                    Shape.Position = new Vector2f((WindowWidth / 2) - 45f, 0f);
+                    Shape.Position = new Vector2f(WindowWidth / 2 - 45f, 0f);
                     break;
 
                 case Direction.up:
                     Shape = new RectangleShape(new Vector2f(CarFrontSize, CarSideSize));
-                    Shape.Position = new Vector2f((WindowWidth / 2) + 5f, WindowHeight);
-
+                    Shape.Position = new Vector2f(WindowWidth / 2 - 3f, WindowHeight - Shape.Size.Y);
                     break;
 
                 case Direction.left:
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
-                    Shape.Position = new Vector2f(WindowWidth, (WindowHeight / 2) - 45);
-
+                    Shape.Position = new Vector2f(WindowWidth - Shape.Size.X, WindowHeight / 2 - 42);
                     break;
 
                 case Direction.right:
                     Shape = new RectangleShape(new Vector2f(CarSideSize, CarFrontSize));
-                    Shape.Position = new Vector2f(0f, (WindowHeight / 2) + 5f);
-
+                    Shape.Position = new Vector2f(0f, WindowHeight / 2 + 2f);
                     break;
             }
-            Shape.Texture = Texture;
+            if (Texture != null)
+            {
+                Texture textureTemp = Texture.GetValueOrDefault(direction);
+                Shape.Texture = textureTemp;
+            }
+            Engine = new Engine(Engine.Speed.Three, arial);
+            Driver = new Driver(this);
+            Objective = new Objective(this, WindowWidth, WindowHeight);
+            Limitor = 3;
+            this.Color = Color;
         }
 
         private void AssignMove(Direction direction)
         {
-            switch (direction)
+            move = direction switch
             {
-                case Direction.left:
+                Direction.left => new Vector2f(-1, 0),
+                Direction.right => new Vector2f(1, 0),
+                Direction.up => new Vector2f(0, -1),
+                Direction.down => new Vector2f(0, 1),
+                _ => throw new NotImplementedException()
+            };
+        }
 
-                    move = new Vector2f(-1, 0);
-                    break;
+        internal float SecurityDistance => (int)Engine.BoxSpeed > 0 ? CarSideSize * (int)Engine.BoxSpeed : CarSideSize;
 
-                case Direction.right:
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                    move = new Vector2f(1, 0);
-                    break;
-
-                case Direction.up:
-
-                    move = new Vector2f(0, -1);
-                    break;
-
-                case Direction.down:
-
-                    move = new Vector2f(0, 1);
-                    break;
-            }
+        internal override void Update()
+        {
+            Driver.Update();
         }
 
         private void Move()
         {
-            AccuracyEvolution();
-
-            Shape.Position = new Vector2f(Shape.Position.X + (move.X * ActualSpeed), Shape.Position.Y + (move.Y * ActualSpeed));
+            Shape.Position = new Vector2f((float)(Shape.Position.X + move.X * Engine.RotationSpeed), (float)(Shape.Position.Y + move.Y * Engine.RotationSpeed));
         }
 
-        private void AccuracyEvolution()
+        internal void MoveForward()
         {
-            AccuracyPourcentageUpdate();
-            ActualSpeedUpdate();
+            if (!LimitorTrigger()) SpeedUp();
+            Move();
         }
 
-        private void AccuracyPourcentageUpdate()
+        internal void MoveBack(double moveStrength)
         {
-            double delta = 1 - AccuracyPourcentage;
+            if (Engine.BoxSpeed != Engine.Speed.Back) Engine.TryPassBackSpeed();
 
-            if (delta < AccuracyPourcentageStackValue)
-            {
-                AccuracyPourcentage = 1;
-            }
-            else if (delta > 0.5)
-            {
-                AccuracyPourcentage += (AccuracyPourcentageStackValue * 5);
-            }
-            else if (delta > 0.25)
-            {
-                AccuracyPourcentage += (AccuracyPourcentageStackValue * 3);
-            }
-            else
-            {
-                AccuracyPourcentage += AccuracyPourcentageStackValue;
-            }
+            SlowDown(moveStrength);
         }
 
-        private void ActualSpeedUpdate()
+        private void SpeedUp()
         {
-            ActualSpeed = (float)(MaxSpeed * AccuracyPourcentage);
+            Engine.SpeedUp();
         }
 
-        private void Stop()
+        internal void SlowDown(double moveStrength)
         {
-            ActualSpeed = 0f;
-            AccuracyPourcentage = 0.0;
+            Engine.Slowdown(moveStrength);
+            Move();
         }
 
-        public override void Update()
+        internal void Turn(Direction NewDirection)
         {
-            GetInfos();
-            ChooseAnAction();
+            Objective.ConvertShape(this);
+            direction = Objective.Direction;
+            ChangeTexture();
+            Move();
         }
 
-        private void GetInfos()
+        internal void UpgradeCore()
         {
-            LookAtRoadLight();
-            LookAtCarsInFront();
+            Engine.UpgradeCore();
+        }
+        internal void DowngradeCore()
+        {
+            Engine.DowngradeCore();
         }
 
-        private void ChooseAnAction()
+        private void ChangeTexture()
         {
-            switch (status)
-            {
-                case CarState.Go:
-
-                    Move();
-                    break;
-
-                case CarState.Decelerate:
-
-                    Decelerate();
-                    break;
-
-                default:
-
-                    if (isInTheStopArea() && RoadLight.state == RoadLightState.Red && !isThereSomeOneInFront())
-                    {
-                        Decelerate();
-                        //MoveToRoadLightLigne();
-                    }
-                    break;
-            }
+            Texture textureTemp = Texture.GetValueOrDefault(direction);
+            if (textureTemp != null) Shape.Texture = textureTemp;
         }
 
-        private void Decelerate()
+        private bool LimitorTrigger() => IsBehindTheLine() && (int)Engine.BoxSpeed >= Limitor;
+        internal bool AbleToTurn() => Objective.IsInTurningZone(Shape) && !CollisionAfterTurning();
+
+        private bool CollisionAfterTurning()
         {
-            AccuracyPourcentageUpdateDown();
-            ActualSpeedUpdate();
+            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X, Shape.Size.Y));
+
+            shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y);
+
+            Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial, CarColor.red);
+            car.Guid = Guid;
+            car.Shape = shape;
+            car.Objective = Objective;
+            car.Turn(Objective.Direction);
+
+            Car NeerestCar = Driver.AnalyseCarsSeen(LookCars());
+
+            return CollideTest.Invoke(car).Count > 0 || 
+                  (NeerestCar != null && 
+                   Driver.GetDistance(NeerestCar.Shape) <= NeerestCar.SecurityDistance);
         }
 
-        private void AccuracyPourcentageUpdateDown()
+        private RectangleShape GenerateShade()
         {
-            if (AccuracyPourcentage < AccuracyPourcentageStackValue)
-            {
-                AccuracyPourcentage = 0;
-            }
-            else if (AccuracyPourcentage < 0.5)
-            {
-                AccuracyPourcentage -= (AccuracyPourcentageStackValue * 5);
-            }
-            else if (AccuracyPourcentage < 0.25)
-            {
-                AccuracyPourcentage -= (AccuracyPourcentageStackValue * 3);
-            }
-            else
-            {
-                AccuracyPourcentage -= (AccuracyPourcentageStackValue);
-            }
-        }
+            float multiplier = (float)Engine.RotationSpeed * 2;
 
-        private void LookAtRoadLight()
-        {
-            if (isInTheStopArea() && RoadLight.state == RoadLightState.Red)
-            {
-                status = CarState.Stop;
-            }
-            if (isInTheDecelerateArea() && RoadLight.state == RoadLightState.Red)
-            {
-                status = CarState.Decelerate;
-            }
-            else
-            {
-                status = CarState.Go;
-            }
-        }
+            RectangleShape shape = new RectangleShape(new Vector2f(Math.Max(Shape.Size.X, Shape.Size.Y) * (multiplier < 1 ? 1 : multiplier), Math.Max(Shape.Size.X, Shape.Size.Y) * (multiplier < 1 ? 1 : multiplier)));
 
-        private void LookAtCarsInFront()
-        {
-            if (isThereSomeOneInFront())
-            {
-                status = CarState.Decelerate;
-            }
-        }
-
-        private void MoveToRoadLightLigne()
-        {
-            float x = Math.Abs(MaxSpeed * move.X);
-            float x2 = Math.Abs(Shape.Position.X - RoadLight.StopArea.Position.X);
-            float y = Math.Abs(MaxSpeed * move.Y);
-            float y2 = Math.Abs(Shape.Position.Y - RoadLight.StopArea.Position.Y);
+            float diffX = (shape.Size.X / 2) - (Shape.Size.X / 2);
+            float diffY = (shape.Size.Y / 2) - (Shape.Size.Y / 2);
 
             switch (direction)
             {
                 case Direction.left:
-
-                    if (x < x2)
-                    {
-                        Move();
-                    }
-                    else
-                    {
-                        Shape.Position = new Vector2f(Shape.Position.X - x2, Shape.Position.Y);
-                    }
+                    shape.Position = new Vector2f(Shape.Position.X + -shape.Size.X, Shape.Position.Y - diffY);
                     break;
-
                 case Direction.right:
-
-                    if (x < x2)
-                    {
-                        Move();
-                    }
-                    else
-                    {
-                        Shape.Position = new Vector2f(Shape.Position.X + x2, Shape.Position.Y);
-                    }
+                    shape.Position = new Vector2f(Shape.Position.X + Shape.Size.X, Shape.Position.Y - diffY);
                     break;
-
                 case Direction.up:
-
-                    if (y < y2)
-                    {
-                        Move();
-                    }
-                    else
-                    {
-                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y - y2);
-                    }
+                    shape.Position = new Vector2f(Shape.Position.X - diffX, Shape.Position.Y + -shape.Size.Y);
                     break;
-
                 case Direction.down:
-
-                    if (y < y2)
-                    {
-                        Move();
-                    }
-                    else
-                    {
-                        Shape.Position = new Vector2f(Shape.Position.X, Shape.Position.Y + y2);
-                    }
+                    shape.Position = new Vector2f(Shape.Position.X - diffX, Shape.Position.Y + Shape.Size.Y);
                     break;
             }
+
+            return shape;
+        }
+
+        internal List<Car> LookCars()
+        {
+            RectangleShape shape = GenerateShade();
+
+            Car car = new Car(originalDirection, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture, Arial, CarColor.red);
+            car.Guid = Guid;
+            car.Shape = shape;
+
+            return CollideTest.Invoke(car);
+        }
+
+        internal RectangleShape ShowShade()
+        {
+            RectangleShape shape = GenerateShade();
+
+            shape.FillColor = SFML.Graphics.Color.Yellow;
+
+            return shape;
         }
 
         internal bool isColliding(Car car)
@@ -325,40 +254,19 @@ namespace FourWays.Game.Objects
                 return car.Shape.GetGlobalBounds().Intersects(Shape.GetGlobalBounds());
             }
             return false;
-        } 
-
-        internal bool isInTheStopArea()
-        {
-            return Shape.GetGlobalBounds().Intersects(RoadLight.StopArea.GetGlobalBounds()) && isBehindTheRoadLight();
         }
 
-        internal bool isInTheDecelerateArea()
+        internal bool IsCarAlign(RectangleShape shape)
         {
-            return Shape.GetGlobalBounds().Intersects(RoadLight.DecelerateArea.GetGlobalBounds()) && isBehindTheRoadLight();
+            RectangleShape Shape = new RectangleShape(this.Shape);
+            Shape.Position = new Vector2f(this.Shape.Position.X + (this.Shape.Size.X * move.X), this.Shape.Position.Y + (this.Shape.Size.Y * move.Y));
+
+            return Shape.GetGlobalBounds().Intersects(shape.GetGlobalBounds());
         }
 
-        private bool isBehindTheRoadLight()
+        internal RoadLight LookAtRoadLights()
         {
-            switch (direction)
-            {
-                case Direction.left: return Shape.Position.X >= RoadLight.StopArea.Position.X;
-                case Direction.right: return Shape.Position.X <= RoadLight.StopArea.Position.X;
-                case Direction.up: return Shape.Position.Y >= RoadLight.StopArea.Position.Y;
-                case Direction.down: return Shape.Position.Y <= RoadLight.StopArea.Position.Y;
-            }
-            return true;
-        }
-
-        internal bool isThereSomeOneInFront()
-        {
-            RectangleShape shape = new RectangleShape(new Vector2f(Shape.Size.X, Shape.Size.Y));
-            shape.Position = new Vector2f(Shape.Position.X + (SecurityDistance * MaxSpeed * move.X), Shape.Position.Y + (SecurityDistance * MaxSpeed * move.Y));
-
-            Car car = new Car(direction, WindowWidth, WindowHeight, RoadLight, CollideTest, Texture);
-            car.Guid = Guid;
-            car.Shape = shape;
-
-            return CollideTest.Invoke(car);
+            return (IsBehindTheLine() && (RoadLight.state == RoadLightState.Red || RoadLight.state == RoadLightState.Orange)) ? RoadLight : null;
         }
 
         internal bool isOutOfBounds()
@@ -375,6 +283,18 @@ namespace FourWays.Game.Objects
             }
             return false;
         }
+
+        internal bool IsBehindTheLine()
+        {
+            return originalDirection switch
+            {
+                Direction.left => RoadLight.StopLine.Position.X < Shape.Position.X,
+                Direction.right => RoadLight.StopLine.Position.X > Shape.Position.X + Shape.Size.X,
+                Direction.up => RoadLight.StopLine.Position.Y < Shape.Position.Y,
+                Direction.down => RoadLight.StopLine.Position.Y > Shape.Position.Y + Shape.Size.Y,
+                _ => false
+            };
+        }
     }
 
     public enum Direction
@@ -387,8 +307,8 @@ namespace FourWays.Game.Objects
 
     public enum CarState
     {
-        Stop,
         Go,
-        Decelerate
+        Decelerate,
+        Turning
     }
 }

@@ -3,24 +3,21 @@ using FourWays.Loop;
 using SFML.Graphics;
 using SFML.System;
 
-namespace FourWays.Game
+namespace FourWays.Game.Objects.Graphs
 {
     public static class DebugUtility
     {
-        public const string CONSOLE_FONT_PATH = "./fonts/arial.ttf";
-        public static Font consoleFont;
+        internal const string CONSOLE_FONT_PATH = "./fonts/arial.ttf";
+        internal static Font consoleFont;
 
-        public static void LoadContent()
+        internal static void LoadContent()
         {
             consoleFont = new Font(CONSOLE_FONT_PATH);
         }
 
-        public static void DrawPerformanceData(GameLoop gameLoop, Color fontColor)
+        internal static void DrawPerformanceData(GameLoop gameLoop, Color fontColor)
         {
-            if (consoleFont == null)
-            {
-                return;
-            }
+            if (consoleFont == null) return;
 
             DrawPerformanceDataBackgroud(gameLoop);
             DrawPerformanceDataInfos(gameLoop, fontColor);
@@ -28,7 +25,7 @@ namespace FourWays.Game
 
         private static void DrawPerformanceDataBackgroud(GameLoop gameLoop)
         {
-            RectangleShape background = new RectangleShape(new Vector2f(160f, 90f));
+            RectangleShape background = new RectangleShape(new Vector2f(190f, 70f));
             background.Position = new Vector2f(0f, 0f);
             background.FillColor = Color.Blue;
 
@@ -47,10 +44,21 @@ namespace FourWays.Game
 
         private static void DrawPerformanceDataInfos(GameLoop gameLoop, Color fontColor)
         {
-            string totalTimeElapsedStr = gameLoop.GameTime.TotalTimeElapsed.ToString("0.00");
-            string deltaTimeStr = gameLoop.GameTime.DeltaTime.ToString("0.00000");
-            float fps = 1f / gameLoop.GameTime.DeltaTime;
-            string fpsStr = fps.ToString("0.00");
+            string totalTimeElapsedStr = (Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() / 60 / 60, 0, MidpointRounding.ToNegativeInfinity) +
+                                         "h " +
+                                         (Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() / 60, 0, MidpointRounding.ToNegativeInfinity)) % 60 +
+                                         "m " +
+                                         Math.Round(Time.FromSeconds(gameLoop.GameTime.TotalTimeElapsed).AsSeconds() % 60, 0) +
+                                         "s")
+                                         .ToString();
+            string deltaTimeStr = (Math.Round(Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsSeconds() / 60, 0) +
+                                         "m:" +
+                                         Math.Round(Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsSeconds() % 60, 0) +
+                                         "s" +
+                                         Math.Round((float)Time.FromSeconds(gameLoop.GameTime.DeltaTime).AsMilliseconds() % 100, 0) +
+                                         "mls")
+                                         .ToString();
+            string fpsStr = (1f / gameLoop.GameTime.DeltaTime).ToString("0.00");
 
             Text text = new Text("Time Elapsed : " + totalTimeElapsedStr, consoleFont, 14);
             text.Position = new Vector2f(4f, 8f);
@@ -64,14 +72,9 @@ namespace FourWays.Game
             textC.Position = new Vector2f(4f, 48f);
             textC.FillColor = fontColor;
 
-            Text textD = new Text("Death Counter : " + (gameLoop as FourWaysSimulator).DEATH_COUNTER, consoleFont, 14);
-            textD.Position = new Vector2f(4f, 68f);
-            textD.FillColor = fontColor;
-
             gameLoop.Window.Draw(text);
             gameLoop.Window.Draw(textB);
             gameLoop.Window.Draw(textC);
-            gameLoop.Window.Draw(textD);
         }
     }
 }
